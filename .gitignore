@@ -1,0 +1,41 @@
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Sensitive Credentials & Auth Configs
+data/gee_config.json
+.env
+*.pem
+*.key
+
+# Data Files & Rasters (Exclude all GIS datasets & outputs)
+data/
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.qmd
+*.kml
+*.geojson
+*.gpkg
+*.tif
+*.tiff
+*.csv
+
+# Virtual Environments
+venv/
+env/
+.venv/
+ENV/
+
+# Streamlit Local Cache
+.streamlit/
+
+# OS Specific
+desktop.ini
+.DS_Store
+Thumbs.db

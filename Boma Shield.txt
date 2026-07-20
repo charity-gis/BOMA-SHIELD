@@ -1,0 +1,129 @@
+﻿Boma Shield — 10-Day Master Plan
+Where this plan starts from: Reviewer feedback confirmed the model should be a transparent weighted multi-criteria risk score, not a classifier trained on historical incidents. This removed incident-data access as a dependency, which is what makes a 10-day timeline realistic — there's no data-outreach waiting period on the critical path anymore.
+What changed and why (recap)
+Drought alone was too thin a signal — Amboseli-specific research shows conflict severity is amplified by fragmented/blocked migration corridors (fencing, subdivision) and livestock density/overgrazing, not just dryness. So the risk score combines six inputs instead of three. Two more real factors — invasive species spread, water infrastructure status — are deliberately out of scope, named as future work in the submission rather than half-built under time pressure.
+________________
+
+
+0. The model, in one paragraph
+Each zone gets a weekly risk score from a weighted sum of six normalized inputs: NDVI/soil-moisture anomaly, rainfall deficit, distance to water, distance to boundary, corridor-obstruction score, livestock/settlement density, plus a seasonal adjustment. Weights are set from published literature (e.g. density correlating linearly with human-elephant conflict per Mukeka et al.), not fitted to training data. A small (20–50 event) sample of published base rates and Big Life Foundation's public incident feed is used only to sanity-check the output — not to train anything. Everywhere in the submission, dashboard, and alerts: say "risk score" / "conditions elevate risk," never "predicted incident."
+This is a formula, not a fitted model — no train/test split, no held-out validation metrics to defend. That's what makes 10 days workable.
+________________
+
+
+1. Solution Details (for submission, ~250 words)
+Boma Shield estimates weekly conflict risk per zone from six inputs, combined as a transparent weighted multi-criteria score rather than a trained predictive model — an important distinction, since reliable historical incident data at the resolution needed to train a classifier is not consistently accessible within a prototype timeline. Drought stress: NDVI/soil-moisture anomalies (Sentinel-2/MODIS via Google Earth Engine) combined with CHIRPS rainfall deficits. Spatial exposure: distance from farm/settlement clusters to the park boundary and water points (OpenStreetMap). Corridor obstruction: whether the nearest migration corridor segment is fenced or bisected by settlement, using OSM barrier tags and, where available, corridor maps from conservancy partners — since blocked corridors concentrate wildlife movement into fewer, more predictable (and more conflict-prone) paths. Grazing pressure: livestock and settlement density per zone, from FAO's Gridded Livestock of the World and population density rasters, as a proxy for competition over the same forage and water drought is shrinking. Seasonality: time-of-year adjustment, since conflict types documented in the literature (crop raiding, livestock predation) peak in different seasons.
+Each input is normalized and combined using literature-informed weights into a low/medium/high weekly risk label per zone. A small georeferenced sample of published incident reports and field data sanity-checks that flagged zones align with real-world patterns — not to train the model. The architecture is designed so weights can later be learned from data as conservancies log more incidents, but the prototype does not require that data to function.
+The output is a named corridor with a concrete suggested action ("Zone 3, elevated risk this week — reinforce boma / move livestock to guarded corridor"), shown on a ranger dashboard and pushed to households by SMS via Africa's Talking.
+(~245 words — trim/expand to fit exactly)
+________________
+
+
+2. Data sources — quick reference
+Feature
+	Source
+	Access
+	Notes
+	NDVI / soil moisture
+	Sentinel-2, MODIS via Google Earth Engine
+	Free, API
+	
+
+	Rainfall deficit
+	CHIRPS
+	Free, GEE-accessible
+	
+
+	Distance to boundary/water
+	OpenStreetMap (Overpass API)
+	Free
+	
+
+	Corridor/fence obstruction
+	OSM barrier=fence tags via Overpass; corridor maps from Amboseli Ecosystem Trust or Big Life Foundation
+	Free (OSM) / email request
+	OSM alone is enough to ship — don't wait on AET/Big Life replies
+	Livestock/settlement density
+	FAO Gridded Livestock of the World (GLW); Kenya 2019 census ward population density (KNBS)
+	Free download
+	Static layer, no time-series needed
+	Small validation sample (demo only)
+	Mukeka et al. / Munyao et al. published base rates; Big Life Foundation's public daily incident feed (biglife.org); georeferenced news reports
+	Free, public
+	20–50 events is plenty — not a dependency
+	________________
+
+
+3. The 10-Day Plan
+Day 1 — Lock scope + pull static layers
+* Finalize conservancy boundary + 4–8 zones (QGIS/geojson.io) — reuse prior work if it exists.
+* Download FAO GLW livestock layer and KNBS population density data for the study area; clip to zones.
+* Send one email to AET/Big Life for corridor/fence maps — upside only, not blocking. No incident-data outreach needed anymore.
+* Set up the repo/README with the reframed solution description from Section 1.
+Day 2 — Drought + exposure pipeline
+* Pull NDVI/soil-moisture anomalies (GEE) and CHIRPS rainfall deficits per zone.
+* Pull OSM settlement and water points; compute distance-to-boundary and distance-to-water per zone.
+Day 3 — Corridor obstruction + validation sample
+* Pull OSM barrier=fence ways; compute per-zone corridor-obstruction score (e.g. % of corridor length intersected by fencing). Fallback if sparse: treat road/dense-settlement intersection as a proxy.
+* Start the small validation sample in parallel: seasonal/species base rates from the literature, scraped Big Life incident feed. Time-box this to a few hours — it's a demo aid, not a dependency.
+Day 4 — Scoring pipeline
+* Normalize all six inputs (0–1 scale) per zone/week.
+* Set literature-informed starting weights (density and drought weighted highest, per Mukeka et al.'s density-correlation finding); combine into weighted sum → low/medium/high label per zone/week.
+* This is the core deliverable — get it working end-to-end on real pulled data today, even if weights are still rough.
+Day 5 — Tune + sanity-check
+* Spot-check output against the validation sample: do high-risk flags line up with reported seasonal peaks and hotspots? Adjust weights by eye.
+* Optional if time allows: try a simple regression to auto-tune weights against the validation sample, framed as "architecture supports learning weights as more data comes in."
+— Polish + deploy
+* Fix rough edges so a judge can click through without errors.
+* Deploy to Render/Railway, get a public URL. Stress-test from a fresh browser/incognito.Freeze the scoring logic by end of day — everything after this touches dashboard/alerts/deploy, not the model.
+Day 6 — Dashboard
+* Build the Streamlit/React map: zones colour-coded by current risk, click-through to the underlying NDVI/rainfall/corridor/livestock layers driving each score.
+Day 7 — Alerts + integration
+* Wire up Africa's Talking sandbox SMS; test with your own number.
+* Write plain-language alert text with suggested action.
+* Connect pipeline → scoring → dashboard → SMS end to end.
+Day 8 
+Day 9 — Demo + reviewer feedback
+* Record the 2–3 min demo video: problem → dashboard → click into one high-risk zone showing the six layers behind the score → SMS alert → one line on scaling to other conservancies.
+* Send draft prototype/submission text to reviewer; fix anything flagged same day — no slack left after this.
+Day 10 — Submit
+* Final read-through of all sections, including the explicit "future work" line (invasive species, water infrastructure) and the risk-score-not-predictor language throughout.
+* Submit early in the day.
+________________
+
+
+4. Biggest risks
+1. Model-freeze discipline — with only 10 days, the temptation to keep tweaking weights past Day 5 is the main threat to the schedule. Freeze it and move on; a rough-but-shipped scoring pipeline beats a perfectly tuned one that ships late.
+2. Corridor/fence data sparsity — OSM fence tagging may be thin in this area. The road/settlement fallback (Day 3) exists specifically so this can't block you.
+3. Weights looking arbitrary to judges — cite the literature basis for each weight explicitly in the submission and show the validation spot-check in the demo video.
+4. Scope creep — hold the line at six inputs. Anything else goes in "future work," not the build.
+
+
+5. Kiturua
+6. Kitenden
+7. Kitenden-B
+8. Satao Elerai
+9. Nalarami
+10. Oltiyani
+11. OlePolos
+12. Nailepu
+13. Kilitome
+14. Kimana Sanctuary
+15. Motikanju
+16. Selenkay
+17. Kanzi
+18. Olpusare
+Emerging Conservancies (Yellow/Orange)
+* Olchorro Oiborr
+* Oltepesi
+* Elesai
+* Osewan
+* Noosikitok
+* Lorbetera
+* Ilaingurunyoni
+* OleNarika
+* Osupuko
+* Nasaru Olosho
+* Oldonyo Waus
+* Mbirikani Common Grazing Area
+* Rombo
