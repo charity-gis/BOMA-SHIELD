@@ -1,14 +1,18 @@
-# 🛡️ Boma Shield — Early Warning & Risk Assessment System
+# 🛡️ BOMA-SHIELD — Early Warning & Spatial Conflict Risk Assessment
 
-> **Human-Wildlife Conflict Risk Assessment & Spatial Early Warning Portal for the Amboseli-Tsavo-Kilimanjaro Ecosystem.**
+> **Human-Wildlife Conflict Risk Assessment & Spatial Early Warning System for the Amboseli-Tsavo-Kilimanjaro Ecosystem.**
 
 ---
 
-## 📌 Overview
+## 📌 Executive Summary
 
-**Boma Shield** is a spatial risk modeling and early warning portal designed to identify conditions under which **Human-Wildlife Conflict (HWC)**—such as elephant crop-raiding, lion livestock predation, and pastoralist boma raids—is most likely to occur.
+Drought pushes wildlife out of core conservation areas and into neighbouring farms and settlements in search of water and forage. Around ecosystems like Amboseli, this triggers a dual crisis: destroyed crops, killed livestock, and — in response — retaliatory killings of the very wildlife conservancies exist to protect. 
 
-Rather than predicting exact conflict events from historical incident logs alone, Boma Shield models the underlying ecological and spatial drivers across **28 community conservancies and ranches**, anchoring 4 major National Parks (**Amboseli**, **Tsavo West**, **Kilimanjaro**, and **Chyulu Hills**).
+Current early-warning tools treat drought monitoring and wildlife conflict as separate problems, so no system tells a household or a ranger team where and when an incursion is likely before it happens.
+
+**Boma Shield closes that gap.** It generates a weekly, zone-level incursion-risk score for the grazing corridors and settlements bordering a conservancy, combining satellite-derived drought signals with how close farms sit to the park boundary and water points, and with historical conflict incident records. Instead of a general seasonal warning, Boma Shield tells a ranger team *"Zone 3 is high-risk this week"* and tells households in that corridor to reinforce their boma or move livestock — giving them days of lead time to act rather than reacting after an incursion.
+
+Primary users are agropastoral households living along conservancy boundaries and the ranger teams who patrol them.
 
 ---
 
@@ -20,8 +24,8 @@ Rather than predicting exact conflict events from historical incident logs alone
   - **CHIRPS Daily Rainfall**: 10-day dekad precipitation deficits.
 - **📍 Multi-Layer Spatial Overlays**:
   - **1,770 KML Water Points**: Waterhole proximity mapping.
-  - **4 Surrounding National Parks**: Protected area edge boundary proximity.
-  - **826 Human Towns & Settlements**: Human encroachment and settlement density.
+  - **4 Surrounding National Parks**: Protected area edge boundary proximity (Amboseli, Tsavo West, Kilimanjaro, Chyulu Hills).
+  - **826 Human Towns & Settlements**: Human encroachment and settlement density (`busytown.geojson`).
   - **Georeferenced HWC Incident Base Rates**: Historical incident markers for validation.
 - **📉 4-Week Risk Trajectory Analysis**: Historical 4-week dekad time-series tracking vegetation degradation and drought evolution.
 - **⚖️ Dynamic Weight Sliders**: Transparent weight adjustment based on conservation literature (Mukeka et al.).
@@ -51,8 +55,8 @@ Where:
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/boma-shield.git
-cd boma-shield
+git clone https://github.com/charity-gis/BOMA-SHIELD.git
+cd BOMA-SHIELD
 pip install -r requirements.txt
 ```
 
@@ -76,15 +80,11 @@ Open **`http://localhost:8501`** in your browser.
 ## 📁 Project Structure
 
 ```text
-BOMASHIELD/
+BOMA-SHIELD/
 ├── app.py                      # Main Streamlit + Folium Web Portal
 ├── authenticate_gee.py         # Google Earth Engine OAuth & Setup script
 ├── requirements.txt            # Python dependencies
-├── .gitignore                  # Git ignore rules
-├── AMBOSELI CONSERVANCIES.shp  # 28 Conservancy Polygons
-├── national parks.shp          # 4 Surrounding National Parks
-├── export (2).kml              # 1,770 Water Point Placemarks
-├── busytown.geojson            # 826 Human Settlement Polygons
+├── .gitignore                  # Git ignore rules (Excludes GIS datasets & rasters)
 └── src/
     ├── spatial_engine.py       # Spatial analysis & GeoPandas metric extraction
     ├── risk_engine.py          # Multi-criteria scoring & driver diagnostics
