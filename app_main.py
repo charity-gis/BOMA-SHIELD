@@ -135,10 +135,7 @@ def load_incidents():
 
 gdf_incidents = load_incidents()
 
-# Sidebar Configuration
-st.sidebar.title("🛡️ Boma Shield")
-st.sidebar.caption("Human-Wildlife Conflict Risk Assessment & Early Warning System")
-st.sidebar.markdown("---")
+# Title and caption removed since they are handled by st.navigation in app.py
 
 # Spatial Scope Selector
 scope_choice = st.sidebar.selectbox(

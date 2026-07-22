@@ -14,5 +14,8 @@ sms_page = st.Page("pages/1_SMS_Alerts.py", title="SMS Alerts", icon="📱")
 ai_page = st.Page("pages/2_AI_Query.py", title="AI Query", icon="🤖")
 
 # Execute navigation
-pg = st.navigation([main_page, sms_page, ai_page])
+pages = {
+    "🛡️ Boma Shield — Early Warning Risk Portal": [main_page, sms_page, ai_page]
+}
+pg = st.navigation(pages)
 pg.run()
