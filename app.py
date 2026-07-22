@@ -12,7 +12,9 @@ import src.spatial_engine
 import src.risk_engine
 import src.validation_data
 import src.sms_notifier
-
+from dotenv import load_dotenv
+load_dotenv()
+from src.ai_query import generate_sql, run_query
 importlib.reload(src.spatial_engine)
 importlib.reload(src.risk_engine)
 importlib.reload(src.validation_data)
@@ -123,6 +125,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Data Caching Functions
+@st.cache_data
 def load_base_spatial(week_key="2024-W39"):
     spatial = SpatialEngine()
     df_zones = spatial.get_zone_spatial_features(selected_dekad=week_key)
@@ -140,6 +143,14 @@ gdf_incidents = load_incidents()
 st.sidebar.title("🛡️ Boma Shield")
 st.sidebar.caption("Human-Wildlife Conflict Risk Assessment & Early Warning System")
 st.sidebar.markdown("---")
+
+# Spatial Scope Selector
+scope_choice = st.sidebar.selectbox(
+    "🌐 Spatial Evaluation Scope",
+    options=["Entire Amboseli Ecosystem Region (32 Zones)", "Conservancies & Group Ranches Only (28 Zones)", "National Parks Only (4 Parks)"],
+    index=0,
+    help="Switch between monitoring the entire ecosystem landscape or specific land designations."
+)
 
 # Weekly Time-Series Selector
 dekad_options = {
@@ -173,6 +184,33 @@ w_ndvi = st.sidebar.slider("Vegetation Stress (NDVI)", 0.0, 0.5, 0.25, 0.05)
 w_rain = st.sidebar.slider("Rainfall Deficit (CHIRPS)", 0.0, 0.5, 0.20, 0.05)
 w_water = st.sidebar.slider("Waterhole Proximity", 0.0, 0.5, 0.15, 0.05)
 w_bound = st.sidebar.slider("Park Edge Boundary Proximity", 0.0, 0.5, 0.15, 0.05)
+
+# LLM Natural Language Query Interface
+st.sidebar.subheader("🤖 Natural Language Query")
+user_prompt = st.sidebar.text_area("Ask a question about the data (e.g., 'Show water points within 5 km of parks')", height=80)
+temperature = st.sidebar.slider("Model Temperature", 0.0, 1.0, 0.2, 0.1)
+result_view = st.sidebar.selectbox("Result view", options=["Table", "Map", "Both"]) 
+
+if st.sidebar.button("Run Query"):
+    if user_prompt.strip():
+        try:
+            sql = generate_sql(user_prompt, temperature=temperature)
+            result = run_query(sql)
+            df = result.df()
+            if result_view in ("Table", "Both"):
+                st.subheader("Query Results (Table)")
+                st.dataframe(df)
+            if result_view in ("Map", "Both") and "geometry" in df.columns:
+                import folium
+                from streamlit_folium import st_folium
+                m = folium.Map(location=[-2.7, 37.35], zoom_start=9)
+                geojson = df.dropna(subset=["geometry"]).to_json()
+                folium.GeoJson(geojson).add_to(m)
+                st_folium(m, width="100%", height=500)
+        except Exception as e:
+            st.error(f"Query error: {e}")
+    else:
+        st.warning("Please enter a question.")
 w_dense = st.sidebar.slider("Livestock/Grazing Density", 0.0, 0.5, 0.15, 0.05)
 w_corridor = st.sidebar.slider("Corridor Obstruction Score", 0.0, 0.5, 0.10, 0.05)
 
@@ -191,7 +229,15 @@ def get_scored_data_for_week(week_key, weights_dict, season):
     risk_eng = RiskEngine(weights=weights_dict, season=season)
     return risk_eng.compute_risk(df_sp), gdf_wp, gdf_p, gdf_s
 
-df_scored, gdf_waterpoints, gdf_parks, gdf_settlements = get_scored_data_for_week(selected_week_key, custom_weights, season_choice)
+df_scored_all, gdf_waterpoints, gdf_parks, gdf_settlements = get_scored_data_for_week(selected_week_key, custom_weights, season_choice)
+
+# Filter by Spatial Scope Choice
+if "Conservancies" in scope_choice:
+    df_scored = df_scored_all[df_scored_all['category'] != 'National Park'].reset_index(drop=True)
+elif "Parks Only" in scope_choice:
+    df_scored = df_scored_all[df_scored_all['category'] == 'National Park'].reset_index(drop=True)
+else:
+    df_scored = df_scored_all.reset_index(drop=True)
 
 gdf_incidents = load_incidents()
 
@@ -204,18 +250,18 @@ total_waterpoints = len(gdf_waterpoints)
 
 # Header Section
 st.title("🛡️ Boma Shield — Early Warning Risk Portal")
-st.markdown(f"Dynamic weekly risk assessment and early warning system for pastoralist communities and conservancies. Active view: **{dekad_options[selected_week_key]}**.")
-
+st.markdown(f"Dynamic weekly risk assessment and early warning system for the **Amboseli-Tsavo-Kilimanjaro Ecosystem**. Active Scope: **{scope_choice}** | **{dekad_options[selected_week_key]}**.")
 
 # Top Metrics Banner
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">Conservancies</div>
+        <div class="metric-label">Ecosystem Zones</div>
         <div class="metric-value">{total_zones}</div>
     </div>
     """, unsafe_allow_html=True)
+
 with col2:
     st.markdown(f"""
     <div class="metric-card">
