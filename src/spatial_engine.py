@@ -136,7 +136,7 @@ class SpatialEngine:
         for idx, row in self.gdf_all_zones.iterrows():
             geom_4326 = row.geometry
             geom_utm = gdf_utm.loc[idx, 'geometry']
-            name = row['clean_name']
+            name = str(row['clean_name']) if pd.notnull(row['clean_name']) else "Unknown"
             category = row.get('category', 'Zone')
             
             centroid_4326 = geom_4326.centroid

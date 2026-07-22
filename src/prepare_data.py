@@ -29,20 +29,29 @@ def create_h3_grid(gdf, resolution=7):
     }
     
     try:
-        hexagons = h3.polyfill(geo_json, resolution, geo_json_conformant=True)
+        hexagons = h3.polygon_to_cells(geo_json, resolution)
     except:
         hex_set = set()
-        for x in np.linspace(bounds[0], bounds[2], 100):
-            for y in np.linspace(bounds[1], bounds[3], 100):
-                hex_set.add(h3.geo_to_h3(y, x, resolution))
+        # Ensure we cover the bounding box well
+        for x in np.linspace(bounds[0] - 0.1, bounds[2] + 0.1, 100):
+            for y in np.linspace(bounds[1] - 0.1, bounds[3] + 0.1, 100):
+                try:
+                    hex_set.add(h3.latlng_to_cell(y, x, resolution))
+                except:
+                    pass
         hexagons = list(hex_set)
         
+    if not hexagons:
+        print("Warning: No hexagons generated. Creating a single default hexagon.")
+        hexagons = [h3.latlng_to_cell((bounds[1]+bounds[3])/2, (bounds[0]+bounds[2])/2, resolution)]
+
     hex_polys = []
     hex_ids = []
     for h in hexagons:
         try:
-            boundaries = h3.h3_to_geo_boundary(h, geo_json=True)
-            poly = Polygon(boundaries)
+            boundaries = h3.cell_to_boundary(h)
+            # h3.cell_to_boundary returns (lat, lon). We need (lon, lat) for shapely.
+            poly = Polygon([(lon, lat) for lat, lon in boundaries])
             hex_polys.append(poly)
             hex_ids.append(h)
         except Exception as e:
