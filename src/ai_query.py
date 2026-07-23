@@ -36,10 +36,10 @@ def generate_sql(prompt: str, temperature: float = 0.2, max_output_tokens: int =
     schema_instruction = (
         "You are an expert DuckDB spatial SQL analyst. You are given a DuckDB database with the EXACT following tables and columns. DO NOT invent or shorten table names:\n"
         "- scored_zones(name TEXT, category TEXT, risk_level TEXT, risk_score DOUBLE, ndvi_stress DOUBLE, rainfall_deficit DOUBLE, water_proximity DOUBLE, boundary_proximity DOUBLE, livestock_density DOUBLE, corridor_obstruction DOUBLE, primary_drivers TEXT, area_km2 DOUBLE, wkt VARCHAR)\n"
-        "- conservancies(id INTEGER, name TEXT, clean_name TEXT, wkt VARCHAR)\n"
-        "- parks(id INTEGER, Name TEXT, name_en TEXT, wkt VARCHAR)\n"
-        "- settlements(id INTEGER, name TEXT, wkt VARCHAR)\n"
-        "- waterpoints(id INTEGER, Name TEXT, wkt VARCHAR)\n"
+        "- conservancies(name TEXT, clean_name TEXT, wkt VARCHAR)\n"
+        "- parks(Name TEXT, name_en TEXT, wkt VARCHAR)\n"
+        "- settlements(name TEXT, wkt VARCHAR)\n"
+        "- waterpoints(Name TEXT, wkt VARCHAR)\n"
         "Rules:\n"
         "1. Write ONLY a single valid DuckDB SELECT statement.\n"
         "2. Do not include any explanation or markdown formatting (no ```sql).\n"
@@ -76,7 +76,7 @@ def run_query(sql: str, df_scored=None) -> duckdb.DuckDBPyRelation:
     """Execute the given SELECT SQL against the project DuckDB database.
     Returns a DuckDB relation (can be converted to pandas with .df()).
     """
-    con = duckdb.connect('data/boma_shield.duckdb')
+    con = duckdb.connect('data/boma_shield.duckdb', read_only=True)
     con.execute("INSTALL spatial; LOAD spatial;")
     
     if df_scored is not None:

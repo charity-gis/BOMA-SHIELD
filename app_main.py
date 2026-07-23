@@ -362,7 +362,13 @@ if not df_scored.empty:
             aliases=['Zone', 'Category', 'Land Tenure', 'Risk Level', 'Risk Score (%)', 'NDVI Stress', 'Water Dist (km)', 'Park Dist (km)'],
             localize=True
         )
+        )
     ).add_to(m)
+    
+    # Auto-zoom to study area
+    bounds = df_scored.total_bounds
+    if len(bounds) == 4:
+        m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
 
 # Overlay Towns & Human Settlements
 if show_settlements and not gdf_settlements.empty:

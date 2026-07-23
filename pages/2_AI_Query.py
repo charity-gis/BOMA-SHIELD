@@ -25,7 +25,7 @@ col1, col2 = st.columns(2)
 with col1:
     temperature = st.slider("Model Temperature", 0.0, 1.0, 0.2, 0.1)
 with col2:
-    result_view = st.selectbox("Result view", options=["Table", "Map", "Both"]) 
+    result_view = st.selectbox("Result view", options=["Table", "Map", "Markdown Report", "Both"]) 
 
 if st.button("🚀 Run Query", type="primary"):
     if user_prompt.strip():
@@ -41,6 +41,12 @@ if st.button("🚀 Run Query", type="primary"):
                 if result_view in ("Table", "Both"):
                     st.subheader("Query Results (Table)")
                     st.dataframe(df)
+                
+                if result_view in ("Markdown Report", "Both"):
+                    st.subheader("Query Results (Report Ready)")
+                    markdown_str = df.to_markdown(index=False)
+                    report_ready_text = f"### AI Query Results\n**Prompt:** {user_prompt}\n\n**Data Table:**\n\n{markdown_str}"
+                    st.text_area("Copy this text for your report:", value=report_ready_text, height=200)
                     
                 if result_view in ("Map", "Both"):
                     import folium

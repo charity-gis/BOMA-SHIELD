@@ -13,9 +13,11 @@ main_page = st.Page("app_main.py", title="Ecosystem Risk Map", icon="🗺️", d
 sms_page = st.Page("pages/1_SMS_Alerts.py", title="SMS Alerts", icon="📱")
 ai_page = st.Page("pages/2_AI_Query.py", title="AI Query", icon="🤖")
 
+report_page = st.Page("pages/3_Report_Generator.py", title="Generate Report", icon="📄")
+
 # Execute navigation
 pages = {
-    "🛡️ Boma Shield — Early Warning Risk Portal": [main_page, sms_page, ai_page]
+    "🛡️ Boma Shield — Early Warning Risk Portal": [main_page, sms_page, ai_page, report_page]
 }
 pg = st.navigation(pages)
 pg.run()
