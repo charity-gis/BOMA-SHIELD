@@ -362,7 +362,6 @@ if not df_scored.empty:
             aliases=['Zone', 'Category', 'Land Tenure', 'Risk Level', 'Risk Score (%)', 'NDVI Stress', 'Water Dist (km)', 'Park Dist (km)'],
             localize=True
         )
-        )
     ).add_to(m)
     
     # Auto-zoom to study area
