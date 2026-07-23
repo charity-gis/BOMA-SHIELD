@@ -5,6 +5,9 @@ import json
 # Page config moved to app.py
 
 try:
+    import importlib
+    import src.ai_query
+    importlib.reload(src.ai_query)
     from src.ai_query import generate_sql, run_query
 except ImportError:
     st.error("Could not import AI Query modules. Ensure google-genai is installed.")
@@ -30,22 +33,39 @@ if st.button("🚀 Run Query", type="primary"):
             try:
                 sql = generate_sql(user_prompt, temperature=temperature)
                 st.code(sql, language="sql")
-                result = run_query(sql)
+                
+                df_scored = st.session_state.get('df_scored')
+                result = run_query(sql, df_scored=df_scored)
                 df = result.df()
                 
                 if result_view in ("Table", "Both"):
                     st.subheader("Query Results (Table)")
                     st.dataframe(df)
                     
-                if result_view in ("Map", "Both") and "geometry" in df.columns:
+                if result_view in ("Map", "Both"):
                     import folium
                     from streamlit_folium import st_folium
+                    import geopandas as gpd
+                    from shapely import wkt
                     
-                    st.subheader("Spatial Results")
-                    m = folium.Map(location=[-2.7, 37.35], zoom_start=9)
-                    geojson = df.dropna(subset=["geometry"]).to_json()
-                    folium.GeoJson(geojson).add_to(m)
-                    st_folium(m, width="100%", height=500)
+                    # If the AI selected the 'wkt' column, convert it to a GeoDataFrame
+                    if "wkt" in df.columns:
+                        df["geometry"] = df["wkt"].apply(lambda x: wkt.loads(x) if pd.notnull(x) else None)
+                        
+                    if "geometry" in df.columns:
+                        st.subheader("Spatial Results")
+                        m = folium.Map(location=[-2.7, 37.35], zoom_start=9)
+                        
+                        gdf = gpd.GeoDataFrame(df, geometry="geometry", crs="EPSG:4326")
+                        # Drop null geometries to avoid folium crashes
+                        gdf = gdf.dropna(subset=["geometry"])
+                        
+                        if not gdf.empty:
+                            geojson = gdf.to_json()
+                            folium.GeoJson(geojson).add_to(m)
+                            st_folium(m, width="100%", height=500)
+                        else:
+                            st.warning("No valid spatial features found in the result to display on the map.")
                     
             except Exception as e:
                 st.error(f"Query error: {e}")

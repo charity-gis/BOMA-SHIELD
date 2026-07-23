@@ -40,6 +40,11 @@ def compute_exposure(hex_gdf, season=0.5):
     # Apply season as an exponent to increase contrast in dry season
     da_weights = np.power(attr_score, season_intensity)
     
+    # Apply land_tenure flat modifier (e.g. 1.2x for group ranches)
+    if 'land_tenure' in hex_gdf.columns:
+        # Increase weight slightly for group ranches to reflect managed grazing concentration
+        da_weights = np.where(hex_gdf['land_tenure'] == 'group_ranch', da_weights * 1.2, da_weights)
+    
     # Redistribute TLU within each zone based on weights
     hex_gdf['da_weight'] = da_weights
     
@@ -92,6 +97,10 @@ def compute_hazard(hex_gdf, weights, season=0.5):
     
     raw_hazard = (hazard_barrier * w_b) + (hazard_settle * w_s) + (season_hazard * w_seas)
     
+    # Apply mitigation_score multiplier (e.g., presence of scouts or compensation)
+    if 'mitigation_score' in hex_gdf.columns:
+        raw_hazard = raw_hazard * hex_gdf['mitigation_score']
+    
     hex_gdf['hazard_score'] = normalize(raw_hazard)
     return hex_gdf
 
@@ -118,6 +127,13 @@ def compare_da_vs_aw(hex_gdf):
         
     # Divergence absolute difference
     hex_gdf['divergence'] = np.abs(hex_gdf['risk_da'] - hex_gdf['risk_aw'])
+    
+    # Stratified Divergence Report
+    if 'land_tenure' in hex_gdf.columns:
+        print("--- Divergence Stratified by Land Tenure ---")
+        stratified = hex_gdf.groupby('land_tenure')['divergence'].mean()
+        print(stratified)
+        print("--------------------------------------------")
     
     return corr, hex_gdf
 
@@ -146,7 +162,9 @@ def rollup_to_polygons(hex_gdf, poly_gdf):
         'ndvi_stress': 'mean',
         'rainfall_deficit': 'mean',
         'dist_water_km': 'mean',
-        'dist_barrier_km': 'mean'
+        'dist_barrier_km': 'mean',
+        'mitigation_score': 'mean',
+        'land_tenure': lambda x: x.mode()[0] if not x.mode().empty else 'other_community_land'
     }).reset_index()
     
     # Drop columns from poly_gdf that we are aggregating from hexes to avoid _x / _y suffixes
@@ -159,7 +177,6 @@ def rollup_to_polygons(hex_gdf, poly_gdf):
     # Ensure risk_da has no NaNs for the cut
     risk_vals = poly_scored['risk_da'].fillna(0.0)
     poly_scored['risk_level'] = pd.cut(risk_vals, bins=[-0.1, 0.33, 0.66, 1.1], labels=['LOW', 'MEDIUM', 'HIGH'])
-    poly_scored['primary_drivers'] = 'Exposure (Da) x Hazard'
     
     # Re-create columns that app.py expects from the old RiskEngine
     if 'dist_water_km' in poly_scored.columns:
@@ -184,6 +201,24 @@ def rollup_to_polygons(hex_gdf, poly_gdf):
         
     if 'corridor_obstruction' not in poly_scored.columns:
         poly_scored['corridor_obstruction'] = 0.5
+    
+    # Dynamically generate primary drivers
+    def get_drivers(row):
+        drivers = []
+        if row.get('ndvi_stress', 0) > 0.6: drivers.append('High Vegetation Stress')
+        if row.get('water_proximity', 0) > 0.6: drivers.append('Water Scarcity')
+        if row.get('boundary_proximity', 0) > 0.6: drivers.append('Proximity to National Park Boundary')
+        if row.get('livestock_density', 0) > 0.6: drivers.append('Livestock Grazing Density')
+        if row.get('corridor_obstruction', 0) > 0.6: drivers.append('Corridor Obstruction')
+        
+        if not drivers:
+            drivers.append('Exposure (Da) x Hazard') # Default fallback
+            
+        return ', '.join(drivers)
+        
+    poly_scored['primary_drivers'] = poly_scored.apply(get_drivers, axis=1)
+    
+
         
     # Dummy SMS advisory to prevent KeyError
     poly_scored['sms_advisory'] = "ALERT: " + poly_scored['risk_level'].astype(str) + " risk status computed via Dasymetric Exposure model."

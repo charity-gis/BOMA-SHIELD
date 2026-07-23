@@ -25,6 +25,15 @@ def import_layer(gdf: gpd.GeoDataFrame, table_name: str, con=None):
         con = _load_duckdb()
     # Write GeoDataFrame to Parquet (including WKT column)
     gdf = gdf.copy()
+    
+    # Ensure EPSG:4326
+    if gdf.crs is not None and gdf.crs.to_epsg() != 4326:
+        print(f"Reprojecting {table_name} from {gdf.crs} to EPSG:4326")
+        gdf = gdf.to_crs(epsg=4326)
+    elif gdf.crs is None:
+        print(f"Warning: {table_name} has no CRS. Assuming EPSG:4326")
+        gdf = gdf.set_crs(epsg=4326)
+        
     # Convert geometry to WKT string for storage
     gdf['wkt'] = gdf.geometry.apply(lambda geom: geom.wkt if geom else None)
     # Drop shapely geometry objects (they are not serializable)
@@ -85,6 +94,7 @@ if __name__ == "__main__":
     con = _load_duckdb()
     # Import known layers – relative paths
     import_shapefile('AMBOSELI CONSERVANCIES.shp', 'conservancies', con)
+    import_shapefile('Amboseli_Ranches/Ranch boundaries.shp', 'group_ranches', con)
     import_shapefile('national parks.shp', 'parks', con)
     import_geojson('busytown.geojson', 'settlements', con)
     import_kml('export (2).kml', 'waterpoints', con)

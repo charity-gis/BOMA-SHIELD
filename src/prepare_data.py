@@ -142,13 +142,26 @@ def prepare_data():
     else:
         hex_gdf['dist_park_km'] = 10.0
 
-    # 4. Get NDVI/CHIRPS
-    hex_with_climate = gpd.sjoin(hex_gdf, df_zones[['geometry', 'ndvi_stress', 'rainfall_deficit', 'name']], how='left')
+    # 4. Get NDVI/CHIRPS and Land Tenure
+    hex_with_climate = gpd.sjoin(hex_gdf, df_zones[['geometry', 'ndvi_stress', 'rainfall_deficit', 'name', 'category']], how='left')
     hex_with_climate = hex_with_climate[~hex_with_climate.index.duplicated(keep='first')]
     
     hex_gdf['ndvi_stress'] = hex_with_climate['ndvi_stress'].fillna(0.5)
     hex_gdf['rainfall_deficit'] = hex_with_climate['rainfall_deficit'].fillna(0.5)
     hex_gdf['zone_name'] = hex_with_climate['name'].fillna("Unknown")
+    
+    # Map category to land_tenure
+    def map_tenure(cat):
+        if pd.isna(cat): return 'other_community_land'
+        if 'Park' in str(cat): return 'protected_area'
+        if 'Group Ranch' in str(cat): return 'group_ranch'
+        if 'Conservancy' in str(cat): return 'group_ranch' # Treating conservancy as group ranch for now
+        return 'other_community_land'
+        
+    hex_gdf['land_tenure'] = hex_with_climate['category'].apply(map_tenure)
+    
+    # Placeholder for mitigation score (1.0 = no mitigation, <1.0 = reduced hazard)
+    hex_gdf['mitigation_score'] = 1.0
 
     # 5. Save Hex GeoDataFrame to Parquet
     os.makedirs("data/parquet", exist_ok=True)

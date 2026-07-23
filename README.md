@@ -12,6 +12,11 @@ Current early-warning tools treat drought monitoring and wildlife conflict as se
 
 **Boma Shield closes that gap.** It generates a weekly, zone-level incursion-risk score for the grazing corridors and settlements bordering a conservancy, combining satellite-derived drought signals with how close farms sit to the park boundary and water points, and with historical conflict incident records. Instead of a general seasonal warning, Boma Shield tells a ranger team *"Zone 3 is high-risk this week"* and tells households in that corridor to reinforce their boma or move livestock — giving them days of lead time to act rather than reacting after an incursion.
 
+## Core Architecture
+Boma Shield leverages a high-performance in-memory spatial database (DuckDB) and Generative AI (Google Gemini 2.5 Flash) to translate raw ecological variables into predictive threat maps.
+
+> **Architectural Note on Group Ranches**: Group ranch boundaries represent land tenure and community management areas, not physical barriers — the Amboseli ecosystem is functionally unfenced and wildlife/livestock movement is continuous across these boundaries and into Amboseli National Park. Ranch boundaries are used for reporting and (where data exists) mitigation-program attribution, not as a hazard or exclusion factor.
+
 Primary users are agropastoral households living along conservancy boundaries and the ranger teams who patrol them.
 
 ---

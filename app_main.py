@@ -137,13 +137,19 @@ gdf_incidents = load_incidents()
 
 # Title and caption removed since they are handled by st.navigation in app.py
 
-# Spatial Scope Selector
-scope_choice = st.sidebar.selectbox(
-    "🌐 Spatial Evaluation Scope",
-    options=["Entire Amboseli Ecosystem Region (32 Zones)", "Conservancies & Group Ranches Only (28 Zones)", "National Parks Only (4 Parks)"],
-    index=0,
-    help="Switch between monitoring the entire ecosystem landscape or specific land designations."
+# Ecosystem Spatial Scope Selector
+scope_choice = st.sidebar.radio(
+    "🌍 Analysis Scope",
+    ["Ecosystem-Wide (All)", "Group Ranches", "Conservancies", "Parks Only"],
+    index=0
 )
+
+# Optional Specific Ranch Filter
+specific_ranch = "All"
+if scope_choice in ["Group Ranches", "Conservancies"]:
+    available_ranches = ["All"] + sorted([n for n in st.session_state.get('df_scored_all', pd.DataFrame({'name':[]}))['name'].unique() if pd.notnull(n)])
+    if len(available_ranches) > 1:
+        specific_ranch = st.sidebar.selectbox("Filter by Specific Ranch", available_ranches)
 
 # Weekly Time-Series Selector
 dekad_options = {
@@ -220,12 +226,17 @@ st.session_state['gdf_waterpoints'] = gdf_waterpoints
 st.session_state['gdf_parks'] = gdf_parks
 
 # Filter by Spatial Scope Choice
-if "Conservancies" in scope_choice:
-    df_scored = df_scored_all[df_scored_all['category'] != 'National Park'].reset_index(drop=True)
+if "Group Ranches" in scope_choice:
+    df_scored = df_scored_all[df_scored_all['category'] == 'Group Ranch'].reset_index(drop=True)
+elif "Conservancies" in scope_choice:
+    df_scored = df_scored_all[df_scored_all['category'] == 'Conservancy'].reset_index(drop=True)
 elif "Parks Only" in scope_choice:
     df_scored = df_scored_all[df_scored_all['category'] == 'National Park'].reset_index(drop=True)
 else:
     df_scored = df_scored_all.reset_index(drop=True)
+
+if specific_ranch != "All":
+    df_scored = df_scored[df_scored['name'] == specific_ranch].reset_index(drop=True)
 
 st.session_state['df_scored'] = df_scored
 
@@ -330,27 +341,28 @@ def get_color(level):
         return '#10b981'
 
 # Add Conservancy Polygons with Risk Choropleth Styling
-geojson_data = json.loads(df_scored.to_json())
-
-folium.GeoJson(
-    geojson_data,
-    style_function=lambda feature: {
-        'fillColor': get_color(feature['properties']['risk_level']),
-        'color': '#ffffff',
-        'weight': 1.5,
-        'fillOpacity': 0.55
-    },
-    highlight_function=lambda feature: {
-        'weight': 3.5,
-        'color': '#38bdf8',
-        'fillOpacity': 0.75
-    },
-    tooltip=folium.GeoJsonTooltip(
-        fields=['name', 'risk_score', 'risk_level', 'primary_drivers'],
-        aliases=['Conservancy:', 'Risk Score:', 'Level:', 'Primary Drivers:'],
-        localize=True
-    )
-).add_to(m)
+if not df_scored.empty:
+    geojson_data = json.loads(df_scored.to_json())
+    
+    folium.GeoJson(
+        geojson_data,
+        style_function=lambda feature: {
+            'fillColor': get_color(feature['properties']['risk_level']),
+            'color': '#ffffff',
+            'weight': 1.5,
+            'fillOpacity': 0.55
+        },
+        highlight_function=lambda feature: {
+            'weight': 3.5,
+            'color': '#38bdf8',
+            'fillOpacity': 0.75
+        },
+        tooltip=folium.GeoJsonTooltip(
+            fields=['name', 'category', 'land_tenure', 'risk_level', 'risk_score', 'ndvi_stress', 'dist_water_km', 'dist_barrier_km'],
+            aliases=['Zone', 'Category', 'Land Tenure', 'Risk Level', 'Risk Score (%)', 'NDVI Stress', 'Water Dist (km)', 'Park Dist (km)'],
+            localize=True
+        )
+    ).add_to(m)
 
 # Overlay Towns & Human Settlements
 if show_settlements and not gdf_settlements.empty:
@@ -373,17 +385,17 @@ if show_settlements and not gdf_settlements.empty:
 # Overlay Water Points
 if show_waterpoints and not gdf_waterpoints.empty:
     wp_cluster = MarkerCluster(name="Water Points").add_to(m)
-    # Sample max 200 waterpoints for smooth rendering
-    sample_wp = gdf_waterpoints.sample(n=min(200, len(gdf_waterpoints)), random_state=42)
-    for _, wp in sample_wp.iterrows():
+    for _, wp in gdf_waterpoints.iterrows():
+        # Ensure we are using a point coordinate (some geometries might be LineStrings)
+        geom = wp.geometry.centroid if not wp.geometry.geom_type == 'Point' else wp.geometry
         folium.CircleMarker(
-            location=[wp.geometry.y, wp.geometry.x],
-            radius=3.5,
-            color='#38bdf8',
+            location=[geom.y, geom.x],
+            radius=4,
+            color='#3b82f6',
             fill=True,
-            fill_color='#0284c7',
+            fill_color='#60a5fa',
             fill_opacity=0.8,
-            popup=f"Water Point: {wp.get('Name', 'Unknown')}"
+            popup=f"Water Point: {wp.get('name', 'Unknown')}"
         ).add_to(wp_cluster)
 
 # Overlay Incident Base Rate Sample

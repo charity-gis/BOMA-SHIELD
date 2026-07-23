@@ -36,7 +36,8 @@ swahili_drivers_map = {
     'Water Scarcity': 'Uhaba wa maji',
     'Proximity to National Park Boundary': 'Ukaribu na mbuga ya wanyama',
     'Livestock Grazing Density': 'Msongamano wa mifugo',
-    'Corridor Obstruction': 'Kuzuiwa kwa mapito'
+    'Corridor Obstruction': 'Kuzuiwa kwa mapito',
+    'Exposure (Da) x Hazard': 'Mfiduo na Hatari'
 }
 
 def translate_drivers(drivers_str):
@@ -78,8 +79,13 @@ advisory_text = st.text_area("Generated Plain-Language Advisory:", value=advisor
 
 phone_input = st.text_input("Recipient Phone Number (Pastoralist / Ranger Lead):", value="+254712345678")
 
-if st.button("🚀 Dispatch SMS Alert via Africa's Talking", type="primary"):
-    notifier = SMSNotifier()
+# Let the user override the Sender ID directly from the UI
+import os
+default_sender = os.getenv("TALKSASA_SENDER_ID", "Talksasa")
+sender_input = st.text_input("TalkSasa Sender ID (Originator):", value=default_sender, help="Must be an approved Sender ID on your TalkSasa account (e.g., BOMASHIELD, NOTICE)")
+
+if st.button("🚀 Dispatch SMS Alert via TalkSasa", type="primary"):
+    notifier = SMSNotifier(sender_id=sender_input)
     with st.spinner("Dispatching..."):
         result = notifier.send_alert(phone_input, advisory_text, selected_zone['name'])
         

@@ -60,13 +60,26 @@ class SpatialEngine:
         else:
             self.park_union_geom = None
 
-        if 'category' not in self.gdf_conservancies.columns:
-            self.gdf_conservancies['category'] = 'Conservancy / Group Ranch'
+        # Load group ranches from DuckDB (table 'group_ranches')
+        self.gdf_group_ranches = self.con.execute("SELECT *, wkt FROM group_ranches").fetchdf()
+        if not self.gdf_group_ranches.empty:
+            self.gdf_group_ranches['geometry'] = self.gdf_group_ranches['wkt'].apply(wkt.loads)
+            self.gdf_group_ranches = gpd.GeoDataFrame(self.gdf_group_ranches, crs="EPSG:4326")
+            if 'wkt' in self.gdf_group_ranches.columns:
+                self.gdf_group_ranches.drop(columns=['wkt'], inplace=True)
+            self.gdf_group_ranches['clean_name'] = self.gdf_group_ranches.get('Name')
+            self.gdf_group_ranches['category'] = 'Group Ranch'
+        else:
+            self.gdf_group_ranches = gpd.GeoDataFrame(columns=['clean_name', 'category', 'geometry'], crs="EPSG:4326")
 
-        # Combine Conservancies + National Parks into Unified Ecosystem Region Zones
+        if 'category' not in self.gdf_conservancies.columns:
+            self.gdf_conservancies['category'] = 'Conservancy'
+
+        # Combine Conservancies, Group Ranches, and National Parks into Unified Ecosystem Region Zones
         parks_subset = self.gdf_parks[['clean_name', 'category', 'geometry']]
         cons_subset = self.gdf_conservancies[['clean_name', 'category', 'geometry']]
-        self.gdf_all_zones = pd.concat([cons_subset, parks_subset], ignore_index=True)
+        ranch_subset = self.gdf_group_ranches[['clean_name', 'category', 'geometry']]
+        self.gdf_all_zones = pd.concat([cons_subset, parks_subset, ranch_subset], ignore_index=True)
         self.gdf_all_zones = gpd.GeoDataFrame(self.gdf_all_zones, crs="EPSG:4326")
 
         # 3. Load human settlements from DuckDB (table 'settlements')
