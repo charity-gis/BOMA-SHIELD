@@ -92,6 +92,7 @@ else:
 
 # Display Report
 st.subheader(" Generated Report Text")
+st.session_state['latest_report_text'] = report_text
 st.text_area("You can copy this text directly into your documents:", value=report_text, height=400)
 
 import geopandas as gpd

@@ -1,0 +1,5 @@
+- `[x]` Update `pages/3_Report_Generator.py` to store `report_text` in session state.
+- `[x]` Add `generate_report_answer` function to `src/ai_query.py`.
+- `[x]` Update `pages/2_AI_Query.py` UI to support toggling query modes.
+- `[x]` Test and verify changes locally.
+- `[x]` Create `walkthrough.md`.

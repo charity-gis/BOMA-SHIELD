@@ -49,11 +49,10 @@ def generate_sql(prompt: str, temperature: float = 0.2, max_output_tokens: int =
     )
 
     response = client.models.generate_content(
-    model='gemini-2.0-flash',
+    model='gemini-flash-latest',
     contents=[schema_instruction, f"User request: {prompt}"],
     config=genai.types.GenerateContentConfig(
         temperature=temperature,
-        max_output_tokens=1024,
         top_p=0.95,
     ),
 )
@@ -89,3 +88,23 @@ def run_query(sql: str, df_scored=None) -> duckdb.DuckDBPyRelation:
         
     result = con.execute(sql)
     return result
+
+def generate_report_answer(prompt: str, report_text: str, temperature: float = 0.2) -> str:
+    """Answers a user's question based on the provided situation report text."""
+    system_instruction = (
+        "You are an expert conservation analyst and assistant for the Boma Shield project. "
+        "You are provided with the latest generated Situation Report. "
+        "Answer the user's question strictly based on the information in the report. "
+        "If the answer is not contained in the report, politely say so. Do NOT invent data.\n\n"
+        f"--- SITUATION REPORT ---\n{report_text}\n-----------------------"
+    )
+
+    response = client.models.generate_content(
+        model='gemini-flash-latest',
+        contents=[system_instruction, f"User question: {prompt}"],
+        config=genai.types.GenerateContentConfig(
+            temperature=temperature,
+            top_p=0.95,
+        ),
+    )
+    return response.text.strip()
