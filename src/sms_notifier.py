@@ -36,8 +36,13 @@ class SMSNotifier:
                 response = requests.post(url, json=payload, headers=headers, timeout=10)
                 res_json = response.json()
                 
-                # Check response. Usually TalkSasa returns 200 with status: 'success' or 'error'
-                if response.status_code == 200 and res_json.get("status") == "success":
+                # Check response. TalkSasa might return status: 'success' or just a message indicating success.
+                is_success = (response.status_code == 200) and (
+                    str(res_json.get("status")).lower() == "success" or 
+                    "being processed" in str(res_json.get("message", "")).lower()
+                )
+                
+                if is_success:
                     return {
                         "status": "SUCCESS",
                         "mode": "LIVE_TALKSASA",

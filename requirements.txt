@@ -19,3 +19,4 @@ tabulate
 matplotlib
 contextily
 fpdf2
+openai

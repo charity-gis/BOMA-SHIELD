@@ -33,7 +33,11 @@ if query_mode == "Query Database (SQL)":
     
     col1, col2 = st.columns(2)
     with col1:
-        temperature = st.slider("Model Temperature", 0.0, 1.0, 0.2, 0.1)
+        temperature = st.slider(
+            "Model Temperature", 
+            0.0, 1.0, 0.2, 0.1,
+            help="Controls creativity. Lower values make the AI more precise and predictable (best for SQL/Data), while higher values make it more creative."
+        )
     with col2:
         result_view = st.selectbox("Result view", options=["Table", "Map", "Markdown Report", "Both"]) 
 
@@ -99,7 +103,11 @@ else:
             st.text(report_text)
             
         user_prompt = st.text_area("Ask a question about this report (e.g., 'What are the main causes of stress?'):", height=100)
-        temperature = st.slider("Model Temperature", 0.0, 1.0, 0.2, 0.1)
+        temperature = st.slider(
+            "Model Temperature", 
+            0.0, 1.0, 0.2, 0.1,
+            help="Controls creativity. Lower values make the AI more precise and predictable, while higher values make it more creative."
+        )
         
         if st.button(" Ask AI", type="primary"):
             if user_prompt.strip():

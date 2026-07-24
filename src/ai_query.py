@@ -2,16 +2,20 @@ import os
 import re
 import duckdb
 from dotenv import load_dotenv
-from google import genai
+from openai import OpenAI
 
-# Load environment variables (including GEMINI_API_KEY)
+# Load environment variables
 load_dotenv()
 
-# Initialize Gemini client
-api_key = os.getenv('GEMINI_API_KEY')
+# Initialize Groq client using OpenAI SDK
+api_key = os.getenv('GROQ_API_KEY')
 if not api_key:
-    raise RuntimeError('GEMINI_API_KEY not found in environment variables')
-client = genai.Client(api_key=api_key)
+    raise RuntimeError('GROQ_API_KEY not found in environment variables')
+
+client = OpenAI(
+    api_key=api_key,
+    base_url="https://api.groq.com/openai/v1"
+)
 
 # Simple safety check for disallowed SQL commands
 DISALLOWED_PATTERNS = re.compile(r"\b(DROP|DELETE|INSERT|UPDATE|ALTER)\b", re.IGNORECASE)
@@ -20,18 +24,10 @@ def is_safe_prompt(prompt: str) -> bool:
     """Return False if the prompt appears to request disallowed operations."""
     return not bool(DISALLOWED_PATTERNS.search(prompt))
 
-def generate_sql(prompt: str, temperature: float = 0.2, max_output_tokens: int = 256) -> str:
-    """Generate a SELECT SQL query using Gemini.
-
-    Args:
-        prompt: User's natural‑language request.
-        temperature: Controls randomness (0.0‑1.0).
-        max_output_tokens: Upper bound on token count for the response.
-    Returns:
-        The generated SQL string.
-    """
+def generate_sql(prompt: str, temperature: float = 0.2) -> str:
+    """Generate a SELECT SQL query using Groq."""
     if not is_safe_prompt(prompt):
-        raise ValueError('Prompt contains disallowed operations. Only data‑retrieval queries are allowed.')
+        raise ValueError('Prompt contains disallowed operations. Only data-retrieval queries are allowed.')
 
     schema_instruction = (
         "You are an expert DuckDB spatial SQL analyst. You are given a DuckDB database with the EXACT following tables and columns. DO NOT invent or shorten table names:\n"
@@ -48,22 +44,23 @@ def generate_sql(prompt: str, temperature: float = 0.2, max_output_tokens: int =
         "5. The spatial data is stored as a string in the 'wkt' column. You MUST use ST_GeomFromText(wkt) to convert it to a geometry before using DuckDB spatial functions."
     )
 
-    response = client.models.generate_content(
-    model='gemini-flash-latest',
-    contents=[schema_instruction, f"User request: {prompt}"],
-    config=genai.types.GenerateContentConfig(
+    response = client.chat.completions.create(
+        model='llama-3.3-70b-versatile',
+        messages=[
+            {"role": "system", "content": schema_instruction},
+            {"role": "user", "content": prompt}
+        ],
         temperature=temperature,
         top_p=0.95,
-    ),
-)
-    sql = response.text.strip()
+    )
     
-    # Robustly extract SQL if it is wrapped in markdown, ignoring any surrounding text
+    sql = response.choices[0].message.content.strip()
+    
+    # Robustly extract SQL if it is wrapped in markdown
     match = re.search(r"```(?:sql)?(.*?)```", sql, re.DOTALL | re.IGNORECASE)
     if match:
         sql = match.group(1).strip()
     
-    # Fallback to strip trailing semicolons for single queries, though DuckDB usually accepts them
     sql = sql.strip()
     
     # Ensure it starts with SELECT
@@ -72,14 +69,11 @@ def generate_sql(prompt: str, temperature: float = 0.2, max_output_tokens: int =
     return sql
 
 def run_query(sql: str, df_scored=None) -> duckdb.DuckDBPyRelation:
-    """Execute the given SELECT SQL against the project DuckDB database.
-    Returns a DuckDB relation (can be converted to pandas with .df()).
-    """
+    """Execute the given SELECT SQL against the project DuckDB database."""
     con = duckdb.connect('data/boma_shield.duckdb', read_only=True)
     con.execute("INSTALL spatial; LOAD spatial;")
     
     if df_scored is not None:
-        # Create a safe copy with WKT strings instead of Shapely geometries for DuckDB
         df_safe = df_scored.copy()
         if 'geometry' in df_safe.columns:
             df_safe['wkt'] = df_safe['geometry'].apply(lambda geom: geom.wkt if getattr(geom, 'wkt', None) else None)
@@ -90,7 +84,7 @@ def run_query(sql: str, df_scored=None) -> duckdb.DuckDBPyRelation:
     return result
 
 def generate_report_answer(prompt: str, report_text: str, temperature: float = 0.2) -> str:
-    """Answers a user's question based on the provided situation report text."""
+    """Answers a user's question based on the provided situation report text using Groq."""
     system_instruction = (
         "You are an expert conservation analyst and assistant for the Boma Shield project. "
         "You are provided with the latest generated Situation Report. "
@@ -99,12 +93,14 @@ def generate_report_answer(prompt: str, report_text: str, temperature: float = 0
         f"--- SITUATION REPORT ---\n{report_text}\n-----------------------"
     )
 
-    response = client.models.generate_content(
-        model='gemini-flash-latest',
-        contents=[system_instruction, f"User question: {prompt}"],
-        config=genai.types.GenerateContentConfig(
-            temperature=temperature,
-            top_p=0.95,
-        ),
+    response = client.chat.completions.create(
+        model='llama-3.3-70b-versatile',
+        messages=[
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=temperature,
+        top_p=0.95,
     )
-    return response.text.strip()
+    
+    return response.choices[0].message.content.strip()
