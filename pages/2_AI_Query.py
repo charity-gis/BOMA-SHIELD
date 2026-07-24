@@ -9,15 +9,19 @@ try:
     import src.ai_query
     importlib.reload(src.ai_query)
     from src.ai_query import generate_sql, run_query
+    from src.ui_helpers import load_cti_theme
+
+    # Apply CTI Theme
+    load_cti_theme()
 except ImportError:
     st.error("Could not import AI Query modules. Ensure google-genai is installed.")
 
-st.title("🤖 Natural Language Database Query")
+st.title(" Natural Language Database Query")
 st.markdown("Ask natural language questions about the Boma Shield database.")
 
 # Check if data is available in session state
 if 'df_scored' not in st.session_state:
-    st.warning("⚠️ Please initialize the dataset on the main Risk Map page first.")
+    st.warning(" Please initialize the dataset on the main Risk Map page first.")
 
 user_prompt = st.text_area("Ask a question about the data (e.g., 'Show water points within 5 km of parks'):", height=100)
 
@@ -27,7 +31,7 @@ with col1:
 with col2:
     result_view = st.selectbox("Result view", options=["Table", "Map", "Markdown Report", "Both"]) 
 
-if st.button("🚀 Run Query", type="primary"):
+if st.button(" Run Query", type="primary"):
     if user_prompt.strip():
         with st.spinner("Generating and executing query..."):
             try:

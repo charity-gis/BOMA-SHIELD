@@ -26,99 +26,10 @@ from src.spatial_engine import SpatialEngine
 from src.risk_engine import RiskEngine
 from src.validation_data import ValidationData
 from src.sms_notifier import SMSNotifier
+from src.ui_helpers import load_cti_theme, cti_metric_card
 
-
-# Page Config was moved to app.py
-
-# Custom Styling (Glassmorphism & Sleek Dark Theme)
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
-    
-    html, body, [class*="css"] {
-        font-family: 'Outfit', sans-serif;
-    }
-    
-    .stApp {
-        background: linear-gradient(135deg, #022c22 0%, #064e3b 100%);
-        color: #ecfdf5;
-    }
-    
-    /* Metric Cards */
-    .metric-card {
-        background: rgba(6, 78, 59, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(12px);
-        border-radius: 16px;
-        padding: 18px 24px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-    .metric-card:hover {
-        transform: translateY(-2px);
-        border-color: rgba(16, 185, 129, 0.5);
-    }
-    .metric-value {
-        font-size: 2.2rem;
-        font-weight: 700;
-        background: linear-gradient(90deg, #34d399, #10b981);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .metric-label {
-        font-size: 0.85rem;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    
-    /* Risk Badges */
-    .badge-high {
-        background-color: rgba(239, 68, 68, 0.2);
-        color: #f87171;
-        border: 1px solid rgba(239, 68, 68, 0.4);
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-weight: 600;
-    }
-    .badge-medium {
-        background-color: rgba(245, 158, 11, 0.2);
-        color: #fbbf24;
-        border: 1px solid rgba(245, 158, 11, 0.4);
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-weight: 600;
-    }
-    .badge-low {
-        background-color: rgba(16, 185, 129, 0.2);
-        color: #34d399;
-        border: 1px solid rgba(16, 185, 129, 0.4);
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-weight: 600;
-    }
-
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background: rgba(2, 44, 34, 0.95);
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .stButton > button {
-        background: linear-gradient(90deg, #059669, #10b981);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-weight: 600;
-        padding: 10px 20px;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        background: linear-gradient(90deg, #047857, #059669);
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-    }
-</style>
-""", unsafe_allow_html=True)
+# Apply CTI Theme
+load_cti_theme()
 
 # Data Caching Functions
 @st.cache_data
@@ -139,7 +50,7 @@ gdf_incidents = load_incidents()
 
 # Ecosystem Spatial Scope Selector
 scope_choice = st.sidebar.radio(
-    "🌍 Analysis Scope",
+    " Analysis Scope",
     ["Ecosystem-Wide (All)", "Group Ranches", "Conservancies", "Parks Only"],
     index=0
 )
@@ -153,29 +64,43 @@ if scope_choice in ["Group Ranches", "Conservancies"]:
 
 # Weekly Time-Series Selector
 dekad_options = {
-    "2024-W36": "📅 Week 1 (Aug 21-31)",
-    "2024-W37": "📅 Week 2 (Sep 01-10)",
-    "2024-W38": "📅 Week 3 (Sep 11-20)",
-    "2024-W39": "📅 Week 4 (Sep 21-30) — Current"
+    "2024-W36": " Week 1 (Aug 21-31)",
+    "2024-W37": " Week 2 (Sep 01-10)",
+    "2024-W38": " Week 3 (Sep 11-20)",
+    "2024-W39": " Week 4 (Sep 21-30) — Current"
 }
 
 selected_week_key = st.sidebar.selectbox(
-    "📆 Satellite Monitoring Week",
+    " Satellite Monitoring Week",
     options=list(dekad_options.keys()),
     format_func=lambda k: dekad_options[k],
     index=3,
     help="Select weekly dekad to view satellite vegetation and rainfall risk evolution."
 )
 
+if st.sidebar.button("🔄 Fetch Live Satellite Data", help="Fetches the latest 30-day NDVI and Rainfall data from Google Earth Engine. Note: Requires GEE authentication."):
+    with st.sidebar.status("Fetching latest data from GEE...", expanded=True) as status:
+        try:
+            from src.gee_fetcher import GEEFetcher
+            fetcher = GEEFetcher()
+            st.write("Initializing Google Earth Engine...")
+            fetcher.fetch_live_gee_stats(days_back=30)
+            status.update(label="Satellite data refreshed successfully!", state="complete", expanded=False)
+            load_base_spatial.clear() # Clear cache so new JSON is read
+            st.rerun()
+        except Exception as e:
+            status.update(label=f"Failed to fetch data: {e}", state="error")
+
+
 # Season Selector
 season_choice = st.sidebar.selectbox(
-    "🌧️ Seasonality Multiplier",
+    " Seasonality Multiplier",
     options=list(RiskEngine.SEASON_MULTIPLIERS.keys()),
     index=0,
     help="Adjusts risk baseline based on historical seasonal conflict peaks."
 )
 
-with st.sidebar.expander("⚙️ Advanced Weight Configuration"):
+with st.sidebar.expander(" Advanced Weight Configuration"):
     st.caption("Adjust transparent multi-criteria weights")
     w_ndvi = st.slider("Vegetation Stress (NDVI)", 0.0, 0.5, 0.25, 0.05)
     w_rain = st.slider("Rainfall Deficit (CHIRPS)", 0.0, 0.5, 0.20, 0.05)
@@ -250,51 +175,25 @@ avg_risk_score = round(df_scored['risk_score'].mean(), 1)
 total_waterpoints = len(gdf_waterpoints)
 
 # Header Section
-st.title("🛡️ Boma Shield — Early Warning Risk Portal")
-st.markdown(f"Dynamic weekly risk assessment and early warning system for the **Amboseli-Tsavo-Kilimanjaro Ecosystem**. Active Scope: **{scope_choice}** | **{dekad_options[selected_week_key]}**.")
+st.title(" Boma Shield — Early Warning Risk Portal")
+st.markdown(f"Dynamic weekly risk assessment and early warning system for the Amboseli-Tsavo-Kilimanjaro Ecosystem. Active Scope: {scope_choice} | {dekad_options[selected_week_key].strip()}.")
 
 # Top Metrics Banner
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Ecosystem Zones</div>
-        <div class="metric-value">{total_zones}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    cti_metric_card("Ecosystem Zones", str(total_zones), "Total Tracked")
 with col2:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">High Risk Zones</div>
-        <div class="metric-value" style="background: linear-gradient(90deg, #ef4444, #f87171); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{high_risk_count}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    cti_metric_card("High Risk Zones", str(high_risk_count), "Requires Action", severity="critical")
 with col3:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Moderate Risk</div>
-        <div class="metric-value" style="background: linear-gradient(90deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{med_risk_count}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    cti_metric_card("Moderate Risk", str(med_risk_count), "Monitoring", severity="warning")
 with col4:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Avg Risk Score</div>
-        <div class="metric-value">{avg_risk_score}%</div>
-    </div>
-    """, unsafe_allow_html=True)
+    cti_metric_card("Avg Risk Score", f"{avg_risk_score}%", "System Wide")
 with col5:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Water Points</div>
-        <div class="metric-value" style="background: linear-gradient(90deg, #38bdf8, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{total_waterpoints}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    cti_metric_card("Water Points", str(total_waterpoints), "Active Monitored")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-st.subheader("🗺️ Amboseli Ecosystem Risk Map")
+st.subheader(" Amboseli Ecosystem Risk Map")
 
 # Layer Toggles
 l1, l2, l3, l4 = st.columns(4)
@@ -390,7 +289,9 @@ if show_settlements and not gdf_settlements.empty:
 # Overlay Water Points
 if show_waterpoints and not gdf_waterpoints.empty:
     wp_cluster = MarkerCluster(name="Water Points").add_to(m)
-    for _, wp in gdf_waterpoints.iterrows():
+    # Sample max 200 water points for fast rendering (avoids 1,770 iterations on every slide)
+    sample_wp = gdf_waterpoints.sample(n=min(200, len(gdf_waterpoints)), random_state=42)
+    for _, wp in sample_wp.iterrows():
         # Ensure we are using a point coordinate (some geometries might be LineStrings)
         geom = wp.geometry.centroid if not wp.geometry.geom_type == 'Point' else wp.geometry
         folium.CircleMarker(
@@ -430,7 +331,7 @@ st.markdown(legend_html, unsafe_allow_html=True)
 map_data = st_folium(m, width="100%", height=600)
 
 st.markdown("---")
-st.subheader("📊 Zone Risk Inspection")
+st.subheader(" Zone Risk Inspection")
 
 # Conservancy Selection dropdown
 zone_names = df_scored['name'].tolist()
@@ -463,7 +364,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 c1, c2 = st.columns(2)
 
 with c1:
-    st.write("##### 📈 Risk Driver Factors (0.0 to 1.0)")
+    st.write("#####  Risk Driver Factors (0.0 to 1.0)")
     
     factor_df = pd.DataFrame({
         'Factor': [
@@ -488,7 +389,7 @@ with c1:
 
 with c2:
     # 4-Week Risk Trajectory Chart
-    st.write("##### 📉 4-Week Weekly Risk Score Trajectory (%)")
+    st.write("#####  4-Week Weekly Risk Score Trajectory (%)")
     weekly_scores = []
     w_keys = list(dekad_options.keys())
     for w_key in w_keys:
@@ -505,4 +406,4 @@ with c2:
     st.line_chart(trend_df, color='#ef4444' if lvl == 'HIGH' else ('#f59e0b' if lvl == 'MEDIUM' else '#10b981'), height=240)
 
 st.markdown("---")
-st.caption("🛡️ **Boma Shield** — Transparent Multi-Criteria HWC Early Warning System | Developed for Amboseli Conservancies & Pastoralist Communities.")
+st.caption(" **Boma Shield** — Transparent Multi-Criteria HWC Early Warning System | Developed for Amboseli Conservancies & Pastoralist Communities.")

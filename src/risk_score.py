@@ -146,11 +146,15 @@ def run_pipeline(hex_gdf, weights, season=0.5):
 
 def rollup_to_polygons(hex_gdf, poly_gdf):
     """Aggregates hex risk scores up to operational polygons (e.g. conservancies)."""
-    # Spatial join hex centroids to polygons
-    hex_centroids = hex_gdf.copy()
-    hex_centroids['geometry'] = hex_centroids.geometry.centroid
-    
-    joined = gpd.sjoin(hex_centroids, poly_gdf[['name', 'geometry']], how='inner', predicate='intersects')
+    # Use pre-computed zone_name if it exists to avoid extremely slow spatial join
+    if 'zone_name' in hex_gdf.columns:
+        joined = hex_gdf.copy()
+        joined['name'] = joined['zone_name']
+    else:
+        # Fallback: Spatial join hex centroids to polygons
+        hex_centroids = hex_gdf.copy()
+        hex_centroids['geometry'] = hex_centroids.geometry.centroid
+        joined = gpd.sjoin(hex_centroids, poly_gdf[['name', 'geometry']], how='inner', predicate='intersects')
     
     # Aggregate
     agg_df = joined.groupby('name').agg({

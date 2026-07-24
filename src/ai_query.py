@@ -49,7 +49,7 @@ def generate_sql(prompt: str, temperature: float = 0.2, max_output_tokens: int =
     )
 
     response = client.models.generate_content(
-    model='gemini-2.5-flash',
+    model='gemini-2.0-flash',
     contents=[schema_instruction, f"User request: {prompt}"],
     config=genai.types.GenerateContentConfig(
         temperature=temperature,

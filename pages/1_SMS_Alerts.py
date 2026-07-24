@@ -1,14 +1,18 @@
 import streamlit as st
 import pandas as pd
 from src.sms_notifier import SMSNotifier
+from src.ui_helpers import load_cti_theme
+
+# Apply CTI Theme
+load_cti_theme()
 
 # Page config moved to app.py
 
-st.title("📱 Community SMS Early Warning Alert")
+st.title(" Community SMS Early Warning Alert")
 st.markdown("Dispatch targeted risk advisories to pastoralists and ranger teams.")
 
 if 'df_scored' not in st.session_state:
-    st.warning("⚠️ No risk data loaded! Please return to the main Risk Map to initialize the dataset.")
+    st.warning(" No risk data loaded! Please return to the main Risk Map to initialize the dataset.")
     st.stop()
 
 df_scored = st.session_state['df_scored']
@@ -77,20 +81,25 @@ else:
 
 advisory_text = st.text_area("Generated Plain-Language Advisory:", value=advisory_text, height=180)
 
-phone_input = st.text_input("Recipient Phone Number (Pastoralist / Ranger Lead):", value="+254712345678")
+phone_input = st.text_area("Recipient Phone Numbers (Comma separated for Bulk SMS):", value="+254712345678, +254700000000")
 
 # Let the user override the Sender ID directly from the UI
 import os
 default_sender = os.getenv("TALKSASA_SENDER_ID", "Talksasa")
 sender_input = st.text_input("TalkSasa Sender ID (Originator):", value=default_sender, help="Must be an approved Sender ID on your TalkSasa account (e.g., BOMASHIELD, NOTICE)")
 
-if st.button("🚀 Dispatch SMS Alert via TalkSasa", type="primary"):
+if st.button(" Dispatch SMS Alert via TalkSasa", type="primary"):
     notifier = SMSNotifier(sender_id=sender_input)
     with st.spinner("Dispatching..."):
-        result = notifier.send_alert(phone_input, advisory_text, selected_zone['name'])
+        phone_numbers = [num.strip() for num in phone_input.split(",") if num.strip()]
+        results = notifier.send_bulk_alerts(phone_numbers, advisory_text, selected_zone['name'])
         
-        if result['status'] in ['SUCCESS', 'FALLBACK_SANDBOX']:
-            st.success(f"✅ SMS Alert Dispatched to {phone_input}!")
-            st.json(result)
+        success_count = sum(1 for r in results if r['status'] in ['SUCCESS', 'FALLBACK_SANDBOX'])
+        if success_count > 0:
+            st.success(f" Successfully dispatched {success_count} / {len(phone_numbers)} SMS Alerts!")
+            with st.expander("View Dispatch Details"):
+                st.json(results)
         else:
-            st.error(f"❌ Dispatch Error: {result.get('error')}")
+            st.error(f" Failed to dispatch alerts.")
+            if results:
+                st.error(f" Error: {results[0].get('error')}")

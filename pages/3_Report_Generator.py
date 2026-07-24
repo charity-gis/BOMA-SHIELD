@@ -2,12 +2,16 @@ import streamlit as st
 import pandas as pd
 import json
 from datetime import datetime
+from src.ui_helpers import load_cti_theme
 
-st.title("📄 Situation Report Generator")
+# Apply CTI Theme
+load_cti_theme()
+
+st.title(" Situation Report Generator")
 st.markdown("Generate a comprehensive text report and risk map for specific areas or the entire ecosystem.")
 
 if 'df_scored' not in st.session_state:
-    st.warning("⚠️ No risk data loaded! Please return to the main Risk Map to initialize the dataset.")
+    st.warning(" No risk data loaded! Please return to the main Risk Map to initialize the dataset.")
     st.stop()
 
 df_scored = st.session_state['df_scored']
@@ -51,46 +55,45 @@ else:
 st.markdown("---")
 
 # Generate the Text Report
-report_text = f"""# {report_title}
+report_text = f"""BOMA SHIELD SITUATION REPORT: {selected_scope.upper()}
+======================================================
+Period of Analysis: {period_of_analysis}
+Date Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-**Period of Analysis:** {period_of_analysis}
-**Date Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Summary Metrics
+------------------------------------------------------
+- Total Areas Assessed: {total_zones}
+- High Risk Zones (Red): {high_risk_count}
+- Moderate Risk Zones (Amber): {med_risk_count}
+- Average Risk Score: {avg_risk_score}%
 
-## 📊 Summary Metrics
-- **Total Areas Assessed:** {total_zones}
-- **High Risk Zones (Red):** {high_risk_count}
-- **Moderate Risk Zones (Amber):** {med_risk_count}
-- **Average Risk Score:** {avg_risk_score}%
-
-## ⚠️ Primary Causes of Stress
+Primary Causes of Stress
+------------------------------------------------------
 The driving factors exacerbating human-wildlife conflict risk during this period are predominantly:
-**{top_drivers}**
+{top_drivers}
 
-## 🗺️ High-Risk Area Breakdown
+High-Risk Area Breakdown
+------------------------------------------------------
 """
 
 if high_risk_count > 0:
     for _, row in df_report[df_report['risk_level'] == 'HIGH'].iterrows():
-        report_text += f"- **{row['name']}**: Risk Score {row['risk_score']}%. Drivers: {row['primary_drivers']}\n"
+        report_text += f"- {row['name']}: Risk Score {row['risk_score']}%. Drivers: {row['primary_drivers']}\n"
 else:
     report_text += "- No high-risk areas detected in this scope.\n"
 
-report_text += "\n## 🛡️ Recommended Actions\n"
+report_text += "\nRecommended Actions\n------------------------------------------------------\n"
 if high_risk_count > 0 or med_risk_count > 0:
-    report_text += "- **Deploy Ranger Teams:** Increase patrols in high-risk zones highlighted above.\n"
-    report_text += "- **Community Sensitization:** Dispatch SMS alerts to pastoralists regarding dangerous water points.\n"
-    report_text += "- **Corridor Monitoring:** Ensure identified obstruction points are cleared for wildlife movement.\n"
+    report_text += "- Deploy Ranger Teams: Increase patrols in high-risk zones highlighted above.\n"
+    report_text += "- Community Sensitization: Dispatch SMS alerts to pastoralists regarding dangerous water points.\n"
+    report_text += "- Corridor Monitoring: Ensure identified obstruction points are cleared for wildlife movement.\n"
 else:
     report_text += "- Continue baseline monitoring. No immediate critical interventions required.\n"
 
 # Display Report
-st.subheader("📝 Generated Report Text")
+st.subheader(" Generated Report Text")
 st.text_area("You can copy this text directly into your documents:", value=report_text, height=400)
 
-# Display Map
-st.subheader("🗺️ Spatial Overview")
-import folium
-from streamlit_folium import st_folium
 import geopandas as gpd
 from shapely import wkt
 import matplotlib.pyplot as plt
@@ -98,6 +101,12 @@ import contextily as cx
 from fpdf import FPDF
 import io
 import os
+import json
+import folium
+from streamlit_folium import st_folium
+
+# Display Map
+st.subheader(" Spatial Overview")
 
 m = folium.Map(location=[-2.7, 37.35], zoom_start=9)
 
@@ -109,14 +118,14 @@ def get_color(risk):
 if not df_report.empty:
     df_safe = df_report.copy()
     if 'geometry' in df_safe.columns:
-        gdf = gpd.GeoDataFrame(df_safe, geometry="geometry", crs="EPSG:4326")
+        gdf_folium = gpd.GeoDataFrame(df_safe, geometry="geometry", crs="EPSG:4326")
         
         # Center map on scope
-        bounds = gdf.total_bounds
+        bounds = gdf_folium.total_bounds
         if len(bounds) == 4:
             m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
             
-        geojson_data = json.loads(gdf.to_json())
+        geojson_data = json.loads(gdf_folium.to_json())
         
         folium.GeoJson(
             geojson_data,
@@ -132,35 +141,97 @@ if not df_report.empty:
             )
         ).add_to(m)
 
+        # Add static name labels to the Folium map
+        for _, row in gdf_folium.iterrows():
+            if row['geometry']:
+                centroid = row['geometry'].centroid
+                # Clean the name for display
+                short_name = str(row['name']).replace(' Conservancy', '').replace(' National Park', '').replace(' Group Ranch', '').strip()
+                folium.Marker(
+                    location=[centroid.y, centroid.x],
+                    icon=folium.DivIcon(
+                        html=f'<div style="font-size: 9pt; font-weight: bold; color: black; text-shadow: 1px 1px 2px white; text-align: center; width: 100px; margin-left: -50px; margin-top: -10px;">{short_name}</div>'
+                    )
+                ).add_to(m)
+
+# Add Legend
+legend_html = '''
+<div style="
+    position: fixed; 
+    bottom: 50px; left: 50px; width: 180px; height: 110px; 
+    border:2px solid grey; z-index:9999; font-size:14px;
+    background-color:white; opacity: 0.9; padding: 10px;
+    border-radius: 5px; color: black;
+    ">
+    <b>Risk Levels</b><br>
+    <i style="background:#ef4444;width:12px;height:12px;display:inline-block;border-radius:50%;margin-right:5px;"></i> High (&ge; 66%)<br>
+    <i style="background:#f59e0b;width:12px;height:12px;display:inline-block;border-radius:50%;margin-right:5px;"></i> Medium (33-66%)<br>
+    <i style="background:#10b981;width:12px;height:12px;display:inline-block;border-radius:50%;margin-right:5px;"></i> Low (&lt; 33%)
+</div>
+'''
+m.get_root().html.add_child(folium.Element(legend_html))
+
 st_folium(m, width="100%", height=500)
 
 # ----------------------------------------
 # PDF GENERATION
 # ----------------------------------------
-st.subheader("📥 Export to PDF")
+st.subheader(" Export to PDF")
 
 def generate_pdf():
     # 1. Create static map image
     fig, ax = plt.subplots(figsize=(8, 6))
-    if not df_report.empty and 'geometry' in df_report.columns:
-        gdf_web_mercator = gdf.to_crs(epsg=3857)
-        
-        # Define colors
-        color_map = {'HIGH': '#ef4444', 'MEDIUM': '#f59e0b', 'LOW': '#10b981'}
-        gdf_web_mercator['color'] = gdf_web_mercator['risk_level'].map(color_map).fillna('#10b981')
-        
-        gdf_web_mercator.plot(ax=ax, color=gdf_web_mercator['color'], edgecolor='white', alpha=0.6, linewidth=1.5)
+    has_map = False
+    
+    if df_report.empty:
+        st.warning("Warning: The spatial dataframe is empty. The map cannot be generated.")
+    elif 'geometry' not in df_report.columns:
+        st.warning("Warning: The spatial dataframe is missing geometry data. The map cannot be generated.")
+    else:
         try:
-            cx.add_basemap(ax, source=cx.providers.CartoDB.Positron)
-        except:
-            pass
+            gdf_local = gpd.GeoDataFrame(df_report, geometry="geometry", crs="EPSG:4326")
+            gdf_web_mercator = gdf_local.to_crs(epsg=3857)
             
-        ax.set_axis_off()
-        plt.title(f"{report_title} - Spatial Map")
-        plt.tight_layout()
-        
+            # Define colors
+            color_map = {'HIGH': '#ef4444', 'MEDIUM': '#f59e0b', 'LOW': '#10b981'}
+            colors = gdf_web_mercator['risk_level'].map(color_map).fillna('#10b981')
+            
+            gdf_web_mercator.plot(ax=ax, color=colors, edgecolor='white', alpha=0.6, linewidth=1.5)
+            
+            # Add text labels to the PDF map
+            for _, row in gdf_web_mercator.iterrows():
+                if row['geometry']:
+                    centroid = row['geometry'].centroid
+                    short_name = str(row['name']).replace(' Conservancy', '').replace(' National Park', '').replace(' Group Ranch', '').strip()
+                    ax.annotate(text=short_name, xy=(centroid.x, centroid.y), xytext=(0, 0), 
+                                textcoords="offset points", fontsize=7, fontweight='bold', 
+                                color='black', ha='center', va='center',
+                                path_effects=[plt.matplotlib.patheffects.withStroke(linewidth=2, foreground='white')])
+            
+            try:
+                cx.add_basemap(ax, source=cx.providers.CartoDB.Positron)
+            except Exception as e:
+                print("Basemap failed:", e)
+                
+            import matplotlib.patches as mpatches
+            legend_patches = [
+                mpatches.Patch(color='#ef4444', label='High Risk (>= 66%)', alpha=0.6),
+                mpatches.Patch(color='#f59e0b', label='Medium Risk (33-66%)', alpha=0.6),
+                mpatches.Patch(color='#10b981', label='Low Risk (< 33%)', alpha=0.6)
+            ]
+            ax.legend(handles=legend_patches, loc='lower right', title='Risk Levels', frameon=True, facecolor='white', framealpha=0.8)
+                
+            ax.set_axis_off()
+            plt.title(f"{report_title} - Spatial Map")
+            plt.tight_layout()
+            has_map = True
+        except Exception as e:
+            st.error(f"Map Plotting Error: {str(e)}")
+            print("Plotting error:", e)
+            
     map_path = "temp_map.png"
-    plt.savefig(map_path, dpi=150, bbox_inches='tight')
+    if has_map:
+        plt.savefig(map_path, dpi=150, bbox_inches='tight')
     plt.close(fig)
 
     # 2. Generate PDF
@@ -241,7 +312,7 @@ if st.button("Generate PDF Report", type="primary"):
 if 'pdf_bytes' in st.session_state:
     st.success("PDF generated successfully!")
     st.download_button(
-        label="📥 Click Here to Download PDF",
+        label=" Click Here to Download PDF",
         data=st.session_state['pdf_bytes'],
         file_name=f"{selected_scope.replace(' ', '_')}_Risk_Report.pdf",
         mime="application/pdf",

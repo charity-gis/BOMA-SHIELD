@@ -16,3 +16,6 @@ python-dotenv
 h3>=3.7.0
 rasterio>=1.3.0
 tabulate
+matplotlib
+contextily
+fpdf2

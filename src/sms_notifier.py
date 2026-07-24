@@ -74,6 +74,20 @@ class SMSNotifier:
                 "note": "No valid TALKSASA_API_KEY found in .env. Dispatched via Sandbox Simulator."
             }
 
+    def send_bulk_alerts(self, recipient_phones, message, zone_name):
+        """
+        Sends SMS alerts to multiple recipients.
+        recipient_phones: list of phone number strings
+        """
+        results = []
+        for phone in recipient_phones:
+            phone = phone.strip()
+            if phone:
+                res = self.send_alert(phone, message, zone_name)
+                results.append(res)
+        return results
+
+
 if __name__ == "__main__":
     notifier = SMSNotifier()
     res = notifier.send_alert("+254712345678", "Hatari kubwa ya mzozo. Endelea kwa tahadhari.", "Kimana Sanctuary")

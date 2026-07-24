@@ -1,0 +1,174 @@
+/* BOMA SHIELD CTI (Cyber Threat Intelligence) Dashboard Aesthetic */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+/* Global Font Override */
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Hide Default Streamlit Elements */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+
+/* Tighten Layout Padding */
+.block-container {
+    padding-top: 1rem !important;
+    padding-bottom: 0rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 100% !important;
+}
+
+/* CTI Metric Cards */
+.cti-card {
+    background: #18181b; /* zinc-900 */
+    border: 1px solid #27272a; /* zinc-800 */
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+.cti-card:hover {
+    border-color: #3f3f46; /* zinc-700 */
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+}
+
+/* Specific Glows for Severity */
+.cti-card.critical {
+    border-color: rgba(239, 68, 68, 0.4); /* red-500 */
+    box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.05), 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+.cti-card.warning {
+    border-color: rgba(245, 158, 11, 0.4); /* amber-500 */
+}
+
+/* Typography Inside Cards */
+.cti-card h4 {
+    color: #a1a1aa; /* zinc-400 */
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.cti-card .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    color: #f4f4f5; /* zinc-100 */
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.cti-card.critical .value {
+    color: #ef4444; /* red-500 */
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.cti-card .subtext {
+    font-size: 0.8rem;
+    color: #71717a; /* zinc-500 */
+    margin-top: 4px;
+}
+
+/* CTI Badges */
+.cti-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #27272a;
+    color: #a1a1aa;
+    border: 1px solid #3f3f46;
+}
+
+.cti-badge.high {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.cti-badge.medium {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.cti-badge.low {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Overriding Streamlit Buttons to look flat and techy */
+.stButton > button {
+    background-color: #18181b !important;
+    border: 1px solid #27272a !important;
+    color: #e4e4e7 !important;
+    border-radius: 4px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    transition: all 0.2s;
+}
+
+.stButton > button:hover {
+    border-color: #06b6d4 !important;
+    color: #06b6d4 !important;
+    background-color: rgba(6, 182, 212, 0.05) !important;
+}
+
+/* Primary Button Override */
+.stButton > button[kind="primary"] {
+    background-color: rgba(6, 182, 212, 0.1) !important;
+    border: 1px solid rgba(6, 182, 212, 0.5) !important;
+    color: #22d3ee !important;
+}
+
+.stButton > button[kind="primary"]:hover {
+    background-color: rgba(6, 182, 212, 0.2) !important;
+    border-color: #06b6d4 !important;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+}
+
+/* Text Inputs / Select Boxes */
+.stTextInput > div > div > input,
+.stSelectbox > div > div > div {
+    background-color: #09090b !important;
+    border: 1px solid #27272a !important;
+    color: #e4e4e7 !important;
+    border-radius: 4px !important;
+}
+
+/* Markdown Dividers */
+hr {
+    border-top: 1px solid #27272a !important;
+}
+
+/* DataFrames */
+[data-testid="stDataFrame"] {
+    border: 1px solid #27272a;
+    border-radius: 6px;
+    background: #18181b;
+}
+
+/* Title adjustments */
+h1 {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em;
+    color: #f4f4f5 !important;
+}
+h2, h3 {
+    font-weight: 600 !important;
+    color: #e4e4e7 !important;
+}
