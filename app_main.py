@@ -206,7 +206,11 @@ with l3:
 with l4:
     show_incidents = st.checkbox("Incident Sample", value=True)
 
-map_style = st.selectbox("Map Style", ["CartoDB dark_matter", "OpenStreetMap", "CartoDB positron"], index=0)
+col_style, col_zoom = st.columns([1, 1])
+with col_style:
+    map_style = st.selectbox("Map Style", ["CartoDB dark_matter", "OpenStreetMap", "CartoDB positron"], index=0)
+with col_zoom:
+    auto_zoom = st.checkbox("🎯 Auto-Zoom to Filtered Region Alone", value=True, help="Automatically zoom and center the map around your selected Analysis Scope or Specific Ranch.")
 
 # Initialize Folium Map centered around Amboseli (-2.7, 37.35)
 m = folium.Map(location=[-2.70, 37.35], zoom_start=9, tiles=map_style)
@@ -326,6 +330,15 @@ legend_html = '''
 </div>
 '''
 st.markdown(legend_html, unsafe_allow_html=True)
+
+# Automatically zoom map to fit the current filtered region alone
+if auto_zoom and not df_scored.empty and hasattr(df_scored, 'total_bounds'):
+    try:
+        bounds = df_scored.total_bounds  # [minx, miny, maxx, maxy]
+        if not (pd.isna(bounds[0]) or pd.isna(bounds[1])):
+            m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]], max_zoom=12)
+    except Exception as e:
+        pass
 
 # Render Map in Streamlit
 map_data = st_folium(m, width="100%", height=600)
