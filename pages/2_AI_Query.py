@@ -19,6 +19,10 @@ except ImportError:
 st.title(" Natural Language Assistant")
 st.markdown("Query the spatial database using natural language or ask questions about the latest generated report.")
 
+if st.button("⬅️ Back to Ecosystem Risk Map", use_container_width=True):
+    st.switch_page("app_main.py")
+st.markdown("---")
+
 # Mode selection
 query_mode = st.radio("Select Query Mode:", ["Query Database (SQL)", "Analyze Latest Report"], horizontal=True)
 

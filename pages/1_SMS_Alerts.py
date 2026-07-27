@@ -11,6 +11,10 @@ load_cti_theme()
 st.title(" Community SMS Early Warning Alert")
 st.markdown("Dispatch targeted risk advisories to pastoralists and ranger teams.")
 
+if st.button("⬅️ Back to Ecosystem Risk Map", use_container_width=True):
+    st.switch_page("app_main.py")
+st.markdown("---")
+
 if 'df_scored' not in st.session_state:
     st.warning(" No risk data loaded! Please return to the main Risk Map to initialize the dataset.")
     st.stop()

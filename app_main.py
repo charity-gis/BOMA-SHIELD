@@ -178,6 +178,21 @@ total_waterpoints = len(gdf_waterpoints)
 st.title(" Boma Shield — Early Warning Risk Portal")
 st.markdown(f"Dynamic weekly risk assessment and early warning system for the Amboseli-Tsavo-Kilimanjaro Ecosystem. Active Scope: {scope_choice} | {dekad_options[selected_week_key].strip()}.")
 
+st.info("📱 **Mobile & Smartphone Users:** To navigate between pages, tap the menu icon **`>`** in the top-left corner, or use the quick access buttons below!")
+
+col_nav1, col_nav2, col_nav3 = st.columns(3)
+with col_nav1:
+    if st.button("💬 Go to SMS Alerts Page", use_container_width=True, type="primary"):
+        st.switch_page("pages/1_SMS_Alerts.py")
+with col_nav2:
+    if st.button("🤖 Go to AI Assistant Page", use_container_width=True):
+        st.switch_page("pages/2_AI_Query.py")
+with col_nav3:
+    if st.button("📄 Go to Report Generator", use_container_width=True):
+        st.switch_page("pages/3_Report_Generator.py")
+
+st.markdown("---")
+
 # Top Metrics Banner
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:

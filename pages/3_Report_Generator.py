@@ -10,6 +10,10 @@ load_cti_theme()
 st.title(" Situation Report Generator")
 st.markdown("Generate a comprehensive text report and risk map for specific areas or the entire ecosystem.")
 
+if st.button("⬅️ Back to Ecosystem Risk Map", use_container_width=True):
+    st.switch_page("app_main.py")
+st.markdown("---")
+
 if 'df_scored' not in st.session_state:
     st.warning(" No risk data loaded! Please return to the main Risk Map to initialize the dataset.")
     st.stop()
