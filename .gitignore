@@ -30,8 +30,8 @@ env/
 .venv/
 ENV/
 
-# Streamlit Local Cache
-.streamlit/
+# Streamlit Secrets (Do not ignore config.toml!)
+.streamlit/secrets.toml
 
 # OS Specific
 desktop.ini
