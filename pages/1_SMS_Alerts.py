@@ -142,6 +142,8 @@ if st.button(" Dispatch SMS Alert via TalkSasa", type="primary"):
         
         if not all_numbers:
             st.error("No phone numbers provided to dispatch.")
+        elif len(all_numbers) > 5:
+            st.error(f"🛑 **Hackathon Demo Limit:** You are attempting to dispatch to {len(all_numbers)} numbers. To prevent API abuse during the demo, the system is capped at **5 numbers** per dispatch.")
         else:
             results = notifier.send_bulk_alerts(all_numbers, advisory_text, selected_zone['name'])
             

@@ -17,8 +17,8 @@ client = OpenAI(
     base_url="https://api.groq.com/openai/v1"
 )
 
-# Simple safety check for disallowed SQL commands
-DISALLOWED_PATTERNS = re.compile(r"\b(DROP|DELETE|INSERT|UPDATE|ALTER)\b", re.IGNORECASE)
+# Expanded safety check to block data manipulation and arbitrary file reading
+DISALLOWED_PATTERNS = re.compile(r"\b(DROP|DELETE|INSERT|UPDATE|ALTER|COPY|INSTALL|LOAD|ATTACH|DETACH|READ_CSV|READ_PARQUET|READ_JSON|PRAGMA|SYSTEM)\b", re.IGNORECASE)
 
 def is_safe_prompt(prompt: str) -> bool:
     """Return False if the prompt appears to request disallowed operations."""

@@ -11,8 +11,7 @@ data/gee_config.json
 *.pem
 *.key
 
-# Data Files & Rasters (Exclude all GIS datasets & outputs)
-data/
+# Data Files (Exclude raw GIS datasets, but keep DuckDB and required app rasters)
 *.shp
 *.shx
 *.dbf
@@ -20,11 +19,10 @@ data/
 *.cpg
 *.qmd
 *.kml
-*.geojson
 *.gpkg
-*.tif
-*.tiff
 *.csv
+# Exclude the runtime contacts database
+data/contacts.db
 
 # Virtual Environments
 venv/

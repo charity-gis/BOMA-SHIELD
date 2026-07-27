@@ -1,0 +1,191 @@
+[
+  {
+    "name": "Ilaingarunyoni Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.267,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.55
+  },
+  {
+    "name": "Lorbetera Wildlife Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.331,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.45
+  },
+  {
+    "name": "Noosikitok Wildlife Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.367,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.39
+  },
+  {
+    "name": "Osewan Wildlife Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.445,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.26
+  },
+  {
+    "name": "Motikanju Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.162,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.73
+  },
+  {
+    "name": "Rombo-Emampuli Wildlife Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.202,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.66
+  },
+  {
+    "name": "Kimana Sanctuary",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.249,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.58
+  },
+  {
+    "name": "Oltiyani Conservancy",
+    "gee_rain_mm": 4.62,
+    "gee_ndvi_raw": 0.21,
+    "rainfall_deficit": 0.92,
+    "ndvi_stress": 0.65
+  },
+  {
+    "name": "Satao Elerai Conservancy",
+    "gee_rain_mm": 22.27,
+    "gee_ndvi_raw": 0.231,
+    "rainfall_deficit": 0.63,
+    "ndvi_stress": 0.61
+  },
+  {
+    "name": "Ole Polos Community Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.189,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.68
+  },
+  {
+    "name": "Nalarami Community Conservancy",
+    "gee_rain_mm": 5.27,
+    "gee_ndvi_raw": 0.21,
+    "rainfall_deficit": 0.91,
+    "ndvi_stress": 0.65
+  },
+  {
+    "name": "Kilitome Community Conservancy",
+    "gee_rain_mm": 0.03,
+    "gee_ndvi_raw": 0.167,
+    "rainfall_deficit": 1.0,
+    "ndvi_stress": 0.72
+  },
+  {
+    "name": "Kanzi Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.444,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.26
+  },
+  {
+    "name": "Olpusare Springs Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.282,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.53
+  },
+  {
+    "name": "Nailepu Community Conservancy",
+    "gee_rain_mm": 0.14,
+    "gee_ndvi_raw": 0.157,
+    "rainfall_deficit": 1.0,
+    "ndvi_stress": 0.74
+  },
+  {
+    "name": "Osupuko Community Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.149,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.75
+  },
+  {
+    "name": "Ole Narika Community Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.212,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.65
+  },
+  {
+    "name": "Kitenden A Community Conservancy",
+    "gee_rain_mm": 8.99,
+    "gee_ndvi_raw": 0.22,
+    "rainfall_deficit": 0.85,
+    "ndvi_stress": 0.63
+  },
+  {
+    "name": "Kitenden B Community Conservancy",
+    "gee_rain_mm": 15.55,
+    "gee_ndvi_raw": 0.283,
+    "rainfall_deficit": 0.74,
+    "ndvi_stress": 0.53
+  },
+  {
+    "name": "Ol donyo Waus Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.388,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.35
+  },
+  {
+    "name": "Mbirikani common grazing area Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.333,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.44
+  },
+  {
+    "name": "Selenkei Wildlife Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.437,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.27
+  },
+  {
+    "name": "Kiturua Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.181,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.7
+  },
+  {
+    "name": "Nasaru-Olosho Community Conservancy",
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.311,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.48
+  },
+  {
+    "name": NaN,
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.39,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.35
+  },
+  {
+    "name": NaN,
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.335,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.44
+  },
+  {
+    "name": NaN,
+    "gee_rain_mm": 10.0,
+    "gee_ndvi_raw": 0.469,
+    "rainfall_deficit": 0.83,
+    "ndvi_stress": 0.22
+  }
+]
