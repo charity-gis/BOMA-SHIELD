@@ -126,7 +126,7 @@ def compare_da_vs_aw(hex_gdf):
     return corr, hex_gdf
 
 def run_pipeline(hex_gdf, weights, season=0.5):
-    hex_gdf = compute_exposure(hex_gdf, season)
+    hex_gdf = compute_exposure(hex_gdf, weights, season)
     hex_gdf = compute_hazard(hex_gdf, weights, season)
     hex_gdf = compute_risk(hex_gdf)
     corr, hex_gdf = compare_da_vs_aw(hex_gdf)
