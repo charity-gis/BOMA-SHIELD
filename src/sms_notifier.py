@@ -37,10 +37,12 @@ class SMSNotifier:
                 res_json = response.json()
                 
                 # Check response. TalkSasa might return status: 'success' or just a message indicating success.
-                is_success = (response.status_code == 200) and (
+                msg_lower = str(res_json.get("message", "")).lower()
+                is_success = (response.status_code in [200, 201, 202]) and (
                     str(res_json.get("status")).lower() == "success" or 
-                    "being processed" in str(res_json.get("message", "")).lower()
-                )
+                    "being processed" in msg_lower or
+                    "delivered" in msg_lower
+                ) or ("being processed" in msg_lower)
                 
                 if is_success:
                     return {

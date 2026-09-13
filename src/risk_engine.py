@@ -3,12 +3,12 @@ import pandas as pd
 
 class RiskEngine:
     DEFAULT_WEIGHTS = {
-        'ndvi_stress': 0.25,
-        'rainfall_deficit': 0.20,
-        'water_proximity': 0.15,
-        'boundary_proximity': 0.15,
-        'livestock_density': 0.15,
-        'corridor_obstruction': 0.10
+        'ndvi_stress': 0.15,
+        'rainfall_deficit': 0.10,
+        'water_proximity': 0.20,
+        'boundary_proximity': 0.40,
+        'livestock_density': 0.10,
+        'corridor_obstruction': 0.05
     }
 
     SEASON_MULTIPLIERS = {

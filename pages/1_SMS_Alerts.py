@@ -25,6 +25,7 @@ zone_names = df_scored['name'].tolist()
 # ---------------------------------------------------------
 # CONTACT MANAGEMENT UI
 # ---------------------------------------------------------
+st.info("⚠️ **Note:** The 'Manage Saved Contacts' section below is for demo purposes only.")
 with st.expander("📋 Manage Saved Contacts"):
     col_add, col_view = st.columns([1, 1.5])
     
