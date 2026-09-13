@@ -102,12 +102,12 @@ season_choice = st.sidebar.selectbox(
 
 with st.sidebar.expander(" Advanced Weight Configuration"):
     st.caption("Adjust transparent multi-criteria weights")
-    w_ndvi = st.slider("Vegetation Stress (NDVI)", 0.0, 0.5, 0.25, 0.05)
-    w_rain = st.slider("Rainfall Deficit (CHIRPS)", 0.0, 0.5, 0.20, 0.05)
-    w_water = st.slider("Waterhole Proximity", 0.0, 0.5, 0.15, 0.05)
-    w_bound = st.slider("Park Edge Boundary Proximity", 0.0, 0.5, 0.15, 0.05)
-    w_dense = st.slider("Livestock/Grazing Density", 0.0, 0.5, 0.15, 0.05)
-    w_corridor = st.slider("Corridor Obstruction Score", 0.0, 0.5, 0.10, 0.05)
+    w_ndvi = st.slider("Vegetation Stress (NDVI)", 0.0, 0.5, 0.15, 0.05)
+    w_rain = st.slider("Rainfall Deficit (CHIRPS)", 0.0, 0.5, 0.10, 0.05)
+    w_water = st.slider("Waterhole Proximity", 0.0, 0.5, 0.20, 0.05)
+    w_bound = st.slider("Park Edge Boundary Proximity", 0.0, 0.5, 0.40, 0.05)
+    w_dense = st.slider("Livestock/Grazing Density", 0.0, 0.5, 0.10, 0.05)
+    w_corridor = st.slider("Corridor Obstruction Score", 0.0, 0.5, 0.05, 0.05)
 
 custom_weights = {
     'ndvi_stress': w_ndvi,
