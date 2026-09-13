@@ -74,10 +74,10 @@ def compute_hazard(hex_gdf, weights, season=0.5):
     Excludes: NDVI, CHIRPS, Water Distance.
     Includes: Barrier Distance, Settlement Distance, Season.
     """
-    # 1. Distance to Park/Barrier (Closer = Higher Hazard)
-    max_barrier = hex_gdf['dist_barrier_km'].max()
-    if max_barrier == 0: max_barrier = 1.0
-    hazard_barrier = 1.0 - (hex_gdf['dist_barrier_km'] / max_barrier)
+    # 1. Distance to Park (Closer = Higher Hazard)
+    max_park = hex_gdf['dist_park_km'].max()
+    if max_park == 0: max_park = 1.0
+    hazard_park = 1.0 - (hex_gdf['dist_park_km'] / max_park)
     
     # 2. Distance to Settlements (Closer = Higher Hazard for HWC usually)
     max_settle = hex_gdf['dist_settlement_km'].max()
@@ -95,7 +95,7 @@ def compute_hazard(hex_gdf, weights, season=0.5):
     total_w = w_barrier + w_settle + w_season
     w_b, w_s, w_seas = w_barrier/total_w, w_settle/total_w, w_season/total_w
     
-    raw_hazard = (hazard_barrier * w_b) + (hazard_settle * w_s) + (season_hazard * w_seas)
+    raw_hazard = (hazard_park * w_b) + (hazard_settle * w_s) + (season_hazard * w_seas)
     
     # Apply mitigation_score multiplier (e.g., presence of scouts or compensation)
     if 'mitigation_score' in hex_gdf.columns:

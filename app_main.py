@@ -276,7 +276,7 @@ if not df_scored.empty:
             'fillOpacity': 0.75
         },
         tooltip=folium.GeoJsonTooltip(
-            fields=['name', 'category', 'land_tenure', 'risk_level', 'risk_score', 'ndvi_stress', 'dist_water_km', 'dist_barrier_km'],
+            fields=['name', 'category', 'land_tenure', 'risk_level', 'risk_score', 'ndvi_stress', 'dist_water_km', 'dist_park_km'],
             aliases=['Zone', 'Category', 'Land Tenure', 'Risk Level', 'Risk Score (%)', 'NDVI Stress', 'Water Dist (km)', 'Park Dist (km)'],
             localize=True
         )
