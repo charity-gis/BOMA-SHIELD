@@ -9,45 +9,31 @@ def normalize(series):
         return np.zeros_like(series)
     return (series - s_min) / (s_max - s_min)
 
-def compute_exposure(hex_gdf, season=0.5):
+def compute_exposure(hex_gdf, weights, season=0.5):
     """
     Computes Da (Dasymetric) and Aw (Areal-Weighted) exposure using TLU.
-    
-    season: 0 (Peak Dry) to 1 (Peak Wet).
-    In Dry season, livestock is tightly clustered around water and good vegetation.
-    In Wet season, livestock can spread out more evenly.
     """
-    # Baseline Areal-Weighted Exposure (uniform spread of census data)
     exposure_aw = hex_gdf['tlu_aw'].copy()
-    
-    # Interaction terms for redistribution
-    # dry season (season -> 0) means higher weight on water and vegetation
-    # wet season (season -> 1) means lower weight (more uniform)
-    season_intensity = 1.0 + (1.0 - season) # 1.0 in wet, 2.0 in dry
-    
-    # We want livestock to prefer lower NDVI stress and lower distance to water.
-    # ndvi_stress is [0, 1] (higher = more stress/worse vegetation)
-    # dist_water_km is positive, higher is worse.
+    season_intensity = 1.0 + (1.0 - season) 
     
     max_water = hex_gdf['dist_water_km'].max()
     if max_water == 0: max_water = 1.0
     norm_water_dist = hex_gdf['dist_water_km'] / max_water
     
-    # Weight formula: Higher score = more attractive to livestock
-    # Score = (1 - ndvi_stress) + (1 - norm_water_dist)
-    attr_score = (1.0 - hex_gdf['ndvi_stress']) + (1.0 - norm_water_dist)
+    w_ndvi = weights.get('ndvi_stress', 0.15)
+    w_water = weights.get('water_proximity', 0.20)
+    w_rain = weights.get('rainfall_deficit', 0.10)
+    w_dense = weights.get('livestock_density', 0.10)
     
-    # Apply season as an exponent to increase contrast in dry season
+    # Use user weights instead of 1.0 flat multipliers
+    attr_score = ((1.0 - hex_gdf['ndvi_stress']) * w_ndvi) + ((1.0 - norm_water_dist) * w_water)
+    
     da_weights = np.power(attr_score, season_intensity)
     
-    # Apply land_tenure flat modifier (e.g. 1.2x for group ranches)
     if 'land_tenure' in hex_gdf.columns:
-        # Increase weight slightly for group ranches to reflect managed grazing concentration
         da_weights = np.where(hex_gdf['land_tenure'] == 'group_ranch', da_weights * 1.2, da_weights)
     
-    # Redistribute TLU within each zone based on weights
     hex_gdf['da_weight'] = da_weights
-    
     exposure_da = np.zeros_like(exposure_aw)
     
     for zone in hex_gdf['zone_name'].unique():
@@ -60,6 +46,10 @@ def compute_exposure(hex_gdf, season=0.5):
         else:
             exposure_da[mask] = hex_gdf.loc[mask, 'tlu_aw']
             
+    # Apply livestock density weight to the final exposure
+    exposure_aw = exposure_aw * max(w_dense, 0.01) * 10
+    exposure_da = exposure_da * max(w_dense, 0.01) * 10
+            
     hex_gdf['exposure_aw'] = exposure_aw
     hex_gdf['exposure_da'] = exposure_da
     
@@ -71,33 +61,32 @@ def compute_exposure(hex_gdf, season=0.5):
 def compute_hazard(hex_gdf, weights, season=0.5):
     """
     Computes Hazard independently of livestock exposure covariates.
-    Excludes: NDVI, CHIRPS, Water Distance.
-    Includes: Barrier Distance, Settlement Distance, Season.
     """
-    # 1. Distance to Park (Closer = Higher Hazard)
     max_park = hex_gdf['dist_park_km'].max()
     if max_park == 0: max_park = 1.0
     hazard_park = 1.0 - (hex_gdf['dist_park_km'] / max_park)
     
-    # 2. Distance to Settlements (Closer = Higher Hazard for HWC usually)
     max_settle = hex_gdf['dist_settlement_km'].max()
     if max_settle == 0: max_settle = 1.0
     hazard_settle = 1.0 - (hex_gdf['dist_settlement_km'] / max_settle)
     
-    # 3. Seasonal wildlife/conflict term (independent of livestock)
-    # E.g., Dry season (season -> 0) pushes wildlife out of parks seeking resources, increasing hazard globally
     season_hazard = (1.0 - season) 
     
-    w_barrier = weights.get('boundary_proximity', 0.5)
-    w_settle = weights.get('settlement_proximity', 0.3)
-    w_season = weights.get('season_hazard', 0.2)
+    w_barrier = weights.get('boundary_proximity', 0.40)
+    w_corridor = weights.get('corridor_obstruction', 0.05)
     
-    total_w = w_barrier + w_settle + w_season
-    w_b, w_s, w_seas = w_barrier/total_w, w_settle/total_w, w_season/total_w
+    # Massively reduce settlement hidden weight to prevent it from overpowering the park boundary
+    w_settle = 0.05 
+    w_season = 0.10
     
-    raw_hazard = (hazard_park * w_b) + (hazard_settle * w_s) + (season_hazard * w_seas)
+    total_w = w_barrier + w_settle + w_season + w_corridor
+    w_b, w_s, w_seas, w_c = w_barrier/total_w, w_settle/total_w, w_season/total_w, w_corridor/total_w
     
-    # Apply mitigation_score multiplier (e.g., presence of scouts or compensation)
+    if 'corridor_obstruction' not in hex_gdf.columns:
+        hex_gdf['corridor_obstruction'] = 0.5
+        
+    raw_hazard = (hazard_park * w_b) + (hazard_settle * w_s) + (season_hazard * w_seas) + (hex_gdf['corridor_obstruction'] * w_c)
+    
     if 'mitigation_score' in hex_gdf.columns:
         raw_hazard = raw_hazard * hex_gdf['mitigation_score']
     
@@ -109,7 +98,6 @@ def compute_risk(hex_gdf):
     hex_gdf['risk_da'] = normalize(hex_gdf['norm_exposure_da'] * hex_gdf['hazard_score'])
     hex_gdf['risk_aw'] = normalize(hex_gdf['norm_exposure_aw'] * hex_gdf['hazard_score'])
     
-    # Discretize risk
     hex_gdf['risk_level_da'] = pd.cut(hex_gdf['risk_da'], bins=[-0.1, 0.33, 0.66, 1.1], labels=['LOW', 'MEDIUM', 'HIGH'])
     hex_gdf['risk_level_aw'] = pd.cut(hex_gdf['risk_aw'], bins=[-0.1, 0.33, 0.66, 1.1], labels=['LOW', 'MEDIUM', 'HIGH'])
     return hex_gdf
